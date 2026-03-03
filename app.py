@@ -94,7 +94,7 @@ AWARDS = [
 # ---------------------------------------------------------------------------
 # ADMIN PIN
 # ---------------------------------------------------------------------------
-ADMIN_PIN = os.environ.get("ADMIN_PIN", "2025")
+ADMIN_PIN = os.environ.get("ADMIN_PIN", "2026")
 
 DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "votes.db")
 
