@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo Day Voting</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --surface2: #242836;
+  --border: #2e3348; --text: #e4e6f0; --text2: #8b8fa8;
+  --primary: #6c5ce7; --success: #00b894; --warning: #fdcb6e;
+  --npi: #0984e3; --nti: #e17055; --ai: #a29bfe;
+  --npi-bg: rgba(9,132,227,.12); --nti-bg: rgba(225,112,85,.12); --ai-bg: rgba(162,155,254,.12);
+  --radius: 12px; --radius-sm: 8px;
+}
+html { font-size: 16px; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text); min-height: 100vh; }
+button { cursor: pointer; font-family: inherit; font-size: inherit; }
+input, textarea, select { font-family: inherit; font-size: inherit; }
+
+/* ===== LAYOUT ===== */
+.container { max-width: 960px; margin: 0 auto; padding: 20px; }
+.hidden { display: none !important; }
+
+/* ===== HEADER ===== */
+.header { display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.header h1 { font-size: 1.4rem; font-weight: 700; }
+.header-actions { display: flex; gap: 10px; align-items: center; }
+.btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm);
+  font-weight: 600; font-size: 0.9rem; transition: all .15s; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: #5b4bd5; }
+.btn-outline { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--text); color: var(--text); }
+.btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #00a383; }
+
+/* ===== LOGIN ===== */
+.login-card { max-width: 420px; margin: 80px auto; background: var(--surface);
+  border-radius: var(--radius); padding: 40px; border: 1px solid var(--border); }
+.login-card h2 { text-align: center; margin-bottom: 8px; font-size: 1.5rem; }
+.login-card p { text-align: center; color: var(--text2); margin-bottom: 28px; }
+.login-card select { width: 100%; padding: 14px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
+  font-size: 1rem; margin-bottom: 20px; appearance: auto; }
+.login-card .btn { width: 100%; padding: 14px; font-size: 1rem; }
+
+/* ===== PROGRESS BAR ===== */
+.progress-wrap { margin-bottom: 24px; }
+.progress-label { display: flex; justify-content: space-between; margin-bottom: 6px;
+  font-size: 0.85rem; color: var(--text2); }
+.progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success));
+  border-radius: 4px; transition: width .3s ease; }
+
+/* ===== GROUP LIST ===== */
+.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.group-card { background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; cursor: pointer;
+  transition: all .15s; display: flex; align-items: center; gap: 14px; }
+.group-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+.group-card.scored { border-color: var(--success); }
+.group-card.active { border-color: var(--primary); background: var(--surface2); }
+.badge { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.badge-NPI { background: var(--npi-bg); color: var(--npi); }
+.badge-NTI { background: var(--nti-bg); color: var(--nti); }
+.badge-AI  { background: var(--ai-bg); color: var(--ai); }
+.group-info { flex: 1; }
+.group-name { font-weight: 600; font-size: 0.95rem; }
+.check-icon { font-size: 1.2rem; color: var(--success); }
+
+/* ===== SCORING PANEL ===== */
+.scoring-panel { background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 28px; margin-top: 24px; }
+.scoring-header { display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px; }
+.scoring-header h3 { font-size: 1.2rem; }
+
+/* ===== SLIDER ===== */
+.slider-group { margin-bottom: 28px; }
+.slider-label { font-weight: 600; margin-bottom: 10px; font-size: 0.92rem; }
+.slider-wrap { position: relative; padding: 0 8px; }
+.slider-track { position: relative; height: 6px; background: var(--surface2);
+  border-radius: 3px; margin: 20px 0 12px; }
+.slider-fill { position: absolute; left: 0; top: 0; height: 100%;
+  background: var(--primary); border-radius: 3px; transition: width .15s; }
+.slider-thumb { position: absolute; top: 50%; width: 28px; height: 28px;
+  background: var(--primary); border: 3px solid #fff; border-radius: 50%;
+  transform: translate(-50%, -50%); cursor: grab; z-index: 2;
+  transition: transform .1s; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+.slider-thumb:active { transform: translate(-50%, -50%) scale(1.15); cursor: grabbing; }
+.slider-ticks { display: flex; justify-content: space-between; }
+.slider-tick { display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; padding: 4px 2px; min-width: 60px; }
+.slider-tick-dot { width: 10px; height: 10px; background: var(--surface2);
+  border-radius: 50%; transition: background .15s; }
+.slider-tick-dot.active { background: var(--primary); }
+.slider-tick-label { font-size: 0.72rem; color: var(--text2); text-align: center; }
+.slider-value { text-align: center; font-size: 0.85rem; font-weight: 600;
+  color: var(--primary); margin-top: 4px; }
+
+/* ===== COMMENT ===== */
+.comment-box { width: 100%; padding: 14px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
+  resize: vertical; min-height: 80px; }
+.comment-box::placeholder { color: var(--text2); }
+.comment-label { font-weight: 600; margin-bottom: 8px; font-size: 0.92rem; }
+
+/* ===== SUBMIT ===== */
+.submit-row { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+.toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+  background: var(--success); color: #fff; padding: 12px 28px; border-radius: var(--radius-sm);
+  font-weight: 600; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+/* ===== ADMIN ===== */
+.pin-card { max-width: 380px; margin: 80px auto; background: var(--surface);
+  border-radius: var(--radius); padding: 40px; border: 1px solid var(--border); text-align: center; }
+.pin-card h2 { margin-bottom: 20px; }
+.pin-input { width: 100%; padding: 14px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
+  text-align: center; font-size: 1.4rem; letter-spacing: 8px; margin-bottom: 20px; }
+.pin-card .btn { width: 100%; padding: 14px; }
+.pin-error { color: #e74c3c; font-size: 0.85rem; margin-top: 10px; }
+
+/* ===== TABS ===== */
+.tabs { display: flex; gap: 4px; margin-bottom: 24px; overflow-x: auto;
+  border-bottom: 1px solid var(--border); padding-bottom: 0; }
+.tab { padding: 12px 18px; font-weight: 600; color: var(--text2);
+  border: none; background: none; border-bottom: 3px solid transparent;
+  white-space: nowrap; font-size: 0.88rem; transition: all .15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* ===== LEADERBOARD ===== */
+.leaderboard { margin-bottom: 32px; }
+.lb-table { width: 100%; border-collapse: collapse; }
+.lb-table th { text-align: left; padding: 10px 14px; font-size: 0.8rem;
+  color: var(--text2); text-transform: uppercase; letter-spacing: .5px;
+  border-bottom: 1px solid var(--border); }
+.lb-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+.lb-table tr:hover td { background: var(--surface2); }
+.lb-table .rank { font-weight: 700; color: var(--text2); width: 50px; }
+.lb-table .winner td { background: rgba(253,203,110,.08); }
+.lb-table .winner .rank { color: var(--warning); }
+.score-bar-wrap { display: flex; align-items: center; gap: 10px; }
+.score-bar { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; }
+.score-bar-inner { height: 100%; border-radius: 4px; transition: width .5s; }
+.score-val { font-weight: 700; min-width: 40px; }
+.judge-count { color: var(--text2); font-size: 0.82rem; }
+
+/* ===== JUDGE GRID ===== */
+.judge-grid-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; margin-top: 32px; }
+.judge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.judge-cell { background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px; display: flex;
+  justify-content: space-between; align-items: center; }
+.judge-cell-name { font-weight: 600; font-size: 0.88rem; }
+.judge-cell-count { font-size: 0.82rem; color: var(--text2); }
+.judge-cell-bar { width: 100%; height: 4px; background: var(--surface2);
+  border-radius: 2px; margin-top: 6px; }
+.judge-cell-fill { height: 100%; background: var(--primary); border-radius: 2px; }
+.judge-cell.complete { border-color: var(--success); }
+.judge-cell.complete .judge-cell-fill { background: var(--success); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .container { padding: 12px; }
+  .group-grid { grid-template-columns: 1fr; }
+  .tabs { gap: 0; }
+  .tab { padding: 10px 12px; font-size: 0.8rem; }
+  .header h1 { font-size: 1.1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== LOGIN VIEW ===== -->
+<div id="view-login" class="container">
+  <div class="login-card">
+    <h2>Demo Day Voting</h2>
+    <p>Select your name to begin scoring</p>
+    <select id="judge-select">
+      <option value="">— Choose your name —</option>
+    </select>
+    <button class="btn btn-primary" onclick="loginAsJudge()">Start Voting</button>
+    <div style="text-align:center; margin-top: 20px;">
+      <button class="btn btn-outline btn-sm" onclick="showAdminLogin()">Admin Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== JUDGE VIEW ===== -->
+<div id="view-judge" class="container hidden">
+  <div class="header">
+    <h1>Demo Day Voting</h1>
+    <div class="header-actions">
+      <span id="judge-label" style="color:var(--text2); font-size:0.9rem;"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Scoring Progress</span>
+      <span id="progress-text">0 / 18</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <div class="group-grid" id="group-grid"></div>
+
+  <div class="scoring-panel hidden" id="scoring-panel">
+    <div class="scoring-header">
+      <div>
+        <h3 id="scoring-group-name"></h3>
+        <span class="badge" id="scoring-badge"></span>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="closeScoring()">Close</button>
+    </div>
+    <div id="sliders-container"></div>
+    <div style="margin-top: 20px;">
+      <div class="comment-label">Comment (optional)</div>
+      <textarea class="comment-box" id="comment-box" placeholder="Any feedback for this group..."></textarea>
+    </div>
+    <div class="submit-row">
+      <button class="btn btn-success" onclick="submitVote()">Submit Score</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN PIN VIEW ===== -->
+<div id="view-admin-pin" class="container hidden">
+  <div class="pin-card">
+    <h2>Admin Dashboard</h2>
+    <input type="password" class="pin-input" id="pin-input" maxlength="10"
+      placeholder="PIN" onkeydown="if(event.key==='Enter')verifyPin()">
+    <button class="btn btn-primary" onclick="verifyPin()">Enter</button>
+    <div class="pin-error hidden" id="pin-error">Incorrect PIN</div>
+    <div style="margin-top: 16px;">
+      <button class="btn btn-outline btn-sm" onclick="showLogin()">Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN DASHBOARD ===== -->
+<div id="view-admin" class="container hidden">
+  <div class="header">
+    <h1>Admin Dashboard</h1>
+    <div class="header-actions">
+      <span style="color:var(--text2); font-size:0.82rem;" id="refresh-label">Auto-refresh: 5s</span>
+      <button class="btn btn-outline btn-sm" onclick="showLogin()">Exit</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="award-tabs"></div>
+  <div class="leaderboard" id="leaderboard"></div>
+
+  <div class="judge-grid-title">Judge Completion</div>
+  <div class="judge-grid" id="judge-grid"></div>
+</div>
+
+<script>
+// ===== STATE =====
+let CONFIG = { judges: [], groups: [], awards: [] };
+let currentJudge = null;
+let currentGroupId = null;
+let judgeVotes = {};
+let activeAwardTab = 0;
+let adminRefreshTimer = null;
+
+const SCORE_LABELS = ['Poor', 'Fair', 'Average', 'Good', 'Excellent'];
+const CAT_COLORS = { NPI: '#0984e3', NTI: '#e17055', AI: '#a29bfe' };
+
+// ===== INIT =====
+async function init() {
+  const res = await fetch('/api/config');
+  CONFIG = await res.json();
+  populateJudgeSelect();
+}
+
+function populateJudgeSelect() {
+  const sel = document.getElementById('judge-select');
+  CONFIG.judges.forEach(j => {
+    const opt = document.createElement('option');
+    opt.value = j; opt.textContent = j;
+    sel.appendChild(opt);
+  });
+}
+
+// ===== VIEW SWITCHING =====
+function showView(id) {
+  ['view-login', 'view-judge', 'view-admin-pin', 'view-admin'].forEach(v =>
+    document.getElementById(v).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  if (id !== 'view-admin' && adminRefreshTimer) {
+    clearInterval(adminRefreshTimer);
+    adminRefreshTimer = null;
+  }
+}
+
+function showLogin() { showView('view-login'); }
+function showAdminLogin() { showView('view-admin-pin'); document.getElementById('pin-input').value = ''; }
+
+function logout() {
+  currentJudge = null;
+  judgeVotes = {};
+  showView('view-login');
+}
+
+// ===== JUDGE LOGIN =====
+async function loginAsJudge() {
+  const sel = document.getElementById('judge-select');
+  if (!sel.value) return;
+  currentJudge = sel.value;
+  document.getElementById('judge-label').textContent = currentJudge;
+
+  const res = await fetch(`/api/votes/${encodeURIComponent(currentJudge)}`);
+  judgeVotes = await res.json();
+
+  renderGroupGrid();
+  closeScoring();
+  showView('view-judge');
+}
+
+// ===== GROUP GRID =====
+function renderGroupGrid() {
+  const grid = document.getElementById('group-grid');
+  grid.innerHTML = '';
+  let scored = 0;
+
+  CONFIG.groups.forEach(g => {
+    const isScored = !!judgeVotes[g.id];
+    if (isScored) scored++;
+
+    const card = document.createElement('div');
+    card.className = `group-card${isScored ? ' scored' : ''}${currentGroupId === g.id ? ' active' : ''}`;
+    card.onclick = () => openScoring(g.id);
+    card.innerHTML = `
+      <span class="badge badge-${g.category}">${g.category}</span>
+      <div class="group-info"><div class="group-name">${g.name}</div></div>
+      ${isScored ? '<span class="check-icon">&#10003;</span>' : ''}
+    `;
+    grid.appendChild(card);
+  });
+
+  document.getElementById('progress-text').textContent = `${scored} / ${CONFIG.groups.length}`;
+  document.getElementById('progress-fill').style.width =
+    `${(scored / CONFIG.groups.length) * 100}%`;
+}
+
+// ===== SCORING =====
+function openScoring(groupId) {
+  currentGroupId = groupId;
+  const group = CONFIG.groups.find(g => g.id === groupId);
+  if (!group) return;
+
+  document.getElementById('scoring-group-name').textContent = group.name;
+  const badge = document.getElementById('scoring-badge');
+  badge.textContent = group.category;
+  badge.className = `badge badge-${group.category}`;
+
+  const container = document.getElementById('sliders-container');
+  container.innerHTML = '';
+
+  const existing = judgeVotes[groupId];
+
+  group.criteria.forEach((crit, i) => {
+    const val = existing ? existing.scores[i] : 3;
+    const div = document.createElement('div');
+    div.className = 'slider-group';
+    div.innerHTML = `
+      <div class="slider-label">${crit}</div>
+      <div class="slider-wrap">
+        <div class="slider-track" data-idx="${i}">
+          <div class="slider-fill" style="width:${(val - 1) * 25}%"></div>
+          <div class="slider-thumb" style="left:${(val - 1) * 25}%"></div>
+        </div>
+        <div class="slider-ticks">
+          ${SCORE_LABELS.map((l, si) => `
+            <div class="slider-tick" data-idx="${i}" data-val="${si + 1}">
+              <div class="slider-tick-dot${si + 1 === val ? ' active' : ''}"></div>
+              <div class="slider-tick-label">${l}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="slider-value">${SCORE_LABELS[val - 1]} (${val})</div>
+      </div>
+      <input type="hidden" class="score-input" data-idx="${i}" value="${val}">
+    `;
+    container.appendChild(div);
+  });
+
+  document.getElementById('comment-box').value = existing ? existing.comment : '';
+
+  // Attach slider events
+  container.querySelectorAll('.slider-tick').forEach(tick => {
+    tick.addEventListener('click', (e) => {
+      const idx = parseInt(tick.dataset.idx);
+      const val = parseInt(tick.dataset.val);
+      setSliderValue(idx, val);
+    });
+  });
+
+  // Drag support
+  container.querySelectorAll('.slider-track').forEach(track => {
+    const idx = parseInt(track.dataset.idx);
+    const thumb = track.querySelector('.slider-thumb');
+
+    function handleDrag(clientX) {
+      const rect = track.getBoundingClientRect();
+      let pct = (clientX - rect.left) / rect.width;
+      pct = Math.max(0, Math.min(1, pct));
+      const val = Math.round(pct * 4) + 1;
+      setSliderValue(idx, val);
+    }
+
+    thumb.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const onMove = (ev) => handleDrag(ev.clientX);
+      const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    thumb.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const onMove = (ev) => handleDrag(ev.touches[0].clientX);
+      const onEnd = () => { document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onEnd); };
+      document.addEventListener('touchmove', onMove);
+      document.addEventListener('touchend', onEnd);
+    });
+
+    track.addEventListener('click', (e) => handleDrag(e.clientX));
+  });
+
+  document.getElementById('scoring-panel').classList.remove('hidden');
+  renderGroupGrid();
+  document.getElementById('scoring-panel').scrollIntoView({ behavior: 'smooth' });
+}
+
+function setSliderValue(idx, val) {
+  const panel = document.getElementById('sliders-container');
+  const input = panel.querySelector(`.score-input[data-idx="${idx}"]`);
+  input.value = val;
+
+  const group = panel.querySelectorAll('.slider-group')[idx];
+  const fill = group.querySelector('.slider-fill');
+  const thumb = group.querySelector('.slider-thumb');
+  const pct = (val - 1) * 25;
+  fill.style.width = pct + '%';
+  thumb.style.left = pct + '%';
+
+  group.querySelectorAll('.slider-tick-dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i < val);
+  });
+
+  group.querySelector('.slider-value').textContent = `${SCORE_LABELS[val - 1]} (${val})`;
+}
+
+function closeScoring() {
+  currentGroupId = null;
+  document.getElementById('scoring-panel').classList.add('hidden');
+  renderGroupGrid();
+}
+
+async function submitVote() {
+  const panel = document.getElementById('sliders-container');
+  const scores = [];
+  panel.querySelectorAll('.score-input').forEach(inp => scores.push(parseInt(inp.value)));
+  const comment = document.getElementById('comment-box').value.trim();
+
+  const res = await fetch('/api/vote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ judge: currentJudge, group_id: currentGroupId, scores, comment }),
+  });
+
+  if (res.ok) {
+    judgeVotes[currentGroupId] = { scores, comment };
+    showToast('Score submitted!');
+
+    // Navigate to next unscored group
+    const currentIdx = CONFIG.groups.findIndex(g => g.id === currentGroupId);
+    let nextGroup = null;
+    for (let i = 1; i <= CONFIG.groups.length; i++) {
+      const candidate = CONFIG.groups[(currentIdx + i) % CONFIG.groups.length];
+      if (!judgeVotes[candidate.id]) { nextGroup = candidate; break; }
+    }
+    if (nextGroup) {
+      openScoring(nextGroup.id);
+    } else {
+      closeScoring();
+    }
+  } else {
+    showToast('Error submitting score');
+  }
+}
+
+// ===== ADMIN =====
+async function verifyPin() {
+  const pin = document.getElementById('pin-input').value;
+  const res = await fetch('/api/admin/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin }),
+  });
+  if (res.ok) {
+    showView('view-admin');
+    renderAdminTabs();
+    loadAdminData();
+    adminRefreshTimer = setInterval(loadAdminData, 5000);
+  } else {
+    document.getElementById('pin-error').classList.remove('hidden');
+  }
+}
+
+function renderAdminTabs() {
+  const container = document.getElementById('award-tabs');
+  container.innerHTML = '';
+  CONFIG.awards.forEach((a, i) => {
+    const tab = document.createElement('button');
+    tab.className = `tab${i === activeAwardTab ? ' active' : ''}`;
+    tab.textContent = a.name;
+    tab.onclick = () => { activeAwardTab = i; renderAdminTabs(); loadAdminData(); };
+    container.appendChild(tab);
+  });
+}
+
+async function loadAdminData() {
+  const [resultsRes, progressRes] = await Promise.all([
+    fetch('/api/results'), fetch('/api/progress')
+  ]);
+  const results = await resultsRes.json();
+  const progress = await progressRes.json();
+
+  renderLeaderboard(results[activeAwardTab]);
+  renderJudgeGrid(progress);
+}
+
+function renderLeaderboard(award) {
+  const container = document.getElementById('leaderboard');
+  if (!award || !award.groups.length) {
+    container.innerHTML = '<p style="color:var(--text2);">No data yet.</p>';
+    return;
+  }
+
+  const maxScore = 5;
+  let html = `<table class="lb-table">
+    <thead><tr><th>Rank</th><th>Group</th><th>Category</th><th>Avg Score</th><th>Judges</th></tr></thead><tbody>`;
+
+  award.groups.forEach((g, i) => {
+    const pct = (g.avg_score / maxScore) * 100;
+    const color = CAT_COLORS[g.category] || '#6c5ce7';
+    const isWinner = i === 0 && g.avg_score > 0;
+    html += `<tr class="${isWinner ? 'winner' : ''}">
+      <td class="rank">${isWinner ? '\u{1F3C6}' : i + 1}</td>
+      <td>${g.name}</td>
+      <td><span class="badge badge-${g.category}">${g.category}</span></td>
+      <td><div class="score-bar-wrap">
+        <div class="score-bar"><div class="score-bar-inner" style="width:${pct}%;background:${color}"></div></div>
+        <span class="score-val">${g.avg_score.toFixed(2)}</span>
+      </div></td>
+      <td class="judge-count">${g.judge_count}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function renderJudgeGrid(progress) {
+  const container = document.getElementById('judge-grid');
+  container.innerHTML = '';
+  CONFIG.judges.forEach(j => {
+    const p = progress[j] || { completed: 0, total: 18 };
+    const pct = (p.completed / p.total) * 100;
+    const isComplete = p.completed === p.total;
+    const cell = document.createElement('div');
+    cell.className = `judge-cell${isComplete ? ' complete' : ''}`;
+    cell.innerHTML = `
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;">
+          <span class="judge-cell-name">${j}</span>
+          <span class="judge-cell-count">${p.completed}/${p.total}</span>
+        </div>
+        <div class="judge-cell-bar"><div class="judge-cell-fill" style="width:${pct}%"></div></div>
+      </div>
+    `;
+    container.appendChild(cell);
+  });
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
