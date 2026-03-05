@@ -394,8 +394,8 @@ function openScoring(groupId) {
       <div class="slider-label">${crit}</div>
       <div class="slider-wrap">
         <div class="slider-track" data-idx="${i}">
-          <div class="slider-fill" style="width:${(val - 1) * 12.5}%"></div>
-          <div class="slider-thumb" style="left:${(val - 1) * 12.5}%"></div>
+          <div class="slider-fill" style="width:${(val - 1) * 25}%"></div>
+          <div class="slider-thumb" style="left:${(val - 1) * 25}%"></div>
         </div>
         <div class="slider-ticks">
           ${TICK_VALUES.map(tv => `
@@ -468,7 +468,7 @@ function setSliderValue(idx, val) {
   const group = panel.querySelectorAll('.slider-group')[idx];
   const fill = group.querySelector('.slider-fill');
   const thumb = group.querySelector('.slider-thumb');
-  const pct = (val - 1) * 12.5;
+  const pct = (val - 1) * 25;
   fill.style.width = pct + '%';
   thumb.style.left = pct + '%';
 
