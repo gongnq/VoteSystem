@@ -36,7 +36,7 @@ app = Flask(__name__)
 # ---------------------------------------------------------------------------
 # JUDGES — edit this list to use real names
 # ---------------------------------------------------------------------------
-JUDGES = [f"Judge {i}" for i in range(1, 16)]
+JUDGES = ["Rob", "Regien", "Adam", "Amit", "Alok", "Prasad", "Volker", "Toby", "Chien"]
 
 # ---------------------------------------------------------------------------
 # GROUPS — (id, display_name, category)
@@ -54,31 +54,28 @@ GROUPS = (
 )
 
 # ---------------------------------------------------------------------------
-# CRITERIA per category — the 4 slider labels shown in the UI
+# CRITERIA per category — the 3 slider labels shown in the UI
 # ---------------------------------------------------------------------------
 CRITERIA_BY_CATEGORY = {
-    "NPI": ["Innovation/Originality", "Customer Delight",
-            "Feasibility/Practicality", "Market Opportunity"],
-    "NTI": ["Innovation/Originality", "Customer Delight",
-            "Feasibility/Practicality", "Market Opportunity"],
-    "AI":  ["Innovation/Originality", "Customer Delight",
-            "AI Practicality", "Market Opportunity"],
+    "NPI": ["Innovation/Originality", "Customer Delight", "Market Opportunity"],
+    "NTI": ["Innovation/Originality", "Customer Delight", "Feasibility/Practicality"],
+    "AI":  ["Innovation/Originality", "Customer Delight", "AI Practicality"],
 }
 
 # ---------------------------------------------------------------------------
 # AWARDS — name, eligible_categories (None = all), criteria indices & weights
-# Criteria indices map to the 4 stored score columns (c1–c4) in order.
+# Criteria indices map to the 3 stored score columns (c1–c3) in order.
 # ---------------------------------------------------------------------------
 AWARDS = [
     {
         "name": "Product Breakthrough Award",
         "categories": ["NPI"],
-        "weights": {0: 1, 1: 1, 2: 1, 3: 1},
+        "weights": {0: 1, 1: 1, 2: 1},
     },
     {
         "name": "Technology Frontier Award",
         "categories": ["NTI"],
-        "weights": {0: 1, 1: 1, 2: 1, 3: 1},
+        "weights": {0: 1, 1: 1, 2: 1},
     },
     {
         "name": "Customer Delight Award",
@@ -88,7 +85,7 @@ AWARDS = [
     {
         "name": "AI Excellence Award",
         "categories": ["AI"],
-        "weights": {0: 1, 1: 1, 2: 1, 3: 1},
+        "weights": {0: 1, 1: 1, 2: 1},
     },
 ]
 
@@ -129,7 +126,6 @@ def init_db():
             c1 REAL NOT NULL CHECK(c1 BETWEEN 1 AND 5),
             c2 REAL NOT NULL CHECK(c2 BETWEEN 1 AND 5),
             c3 REAL NOT NULL CHECK(c3 BETWEEN 1 AND 5),
-            c4 REAL NOT NULL CHECK(c4 BETWEEN 1 AND 5),
             comment TEXT DEFAULT '',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(judge, group_id)
@@ -222,21 +218,21 @@ def api_vote():
     if group_id not in valid_ids:
         return jsonify({"error": "Invalid group"}), 400
 
-    if not isinstance(scores, list) or len(scores) != 4:
-        return jsonify({"error": "Scores must be a list of 4 integers"}), 400
+    if not isinstance(scores, list) or len(scores) != 3:
+        return jsonify({"error": "Scores must be a list of 3 numbers"}), 400
     for s in scores:
         if not isinstance(s, (int, float)) or s < 1 or s > 5 or (s * 2) != int(s * 2):
             return jsonify({"error": "Each score must be 1-5 in 0.5 steps"}), 400
 
     db = get_db()
     db.execute("""
-        INSERT INTO votes (judge, group_id, c1, c2, c3, c4, comment, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO votes (judge, group_id, c1, c2, c3, comment, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(judge, group_id)
         DO UPDATE SET c1=excluded.c1, c2=excluded.c2, c3=excluded.c3,
-                      c4=excluded.c4, comment=excluded.comment,
+                      comment=excluded.comment,
                       updated_at=CURRENT_TIMESTAMP
-    """, (judge, group_id, scores[0], scores[1], scores[2], scores[3], comment))
+    """, (judge, group_id, scores[0], scores[1], scores[2], comment))
     db.commit()
     return jsonify({"ok": True})
 
@@ -247,13 +243,13 @@ def api_judge_votes(judge):
         return jsonify({"error": "Invalid judge"}), 400
     db = get_db()
     rows = db.execute(
-        "SELECT group_id, c1, c2, c3, c4, comment FROM votes WHERE judge = ?",
+        "SELECT group_id, c1, c2, c3, comment FROM votes WHERE judge = ?",
         (judge,),
     ).fetchall()
     votes = {}
     for r in rows:
         votes[r["group_id"]] = {
-            "scores": [r["c1"], r["c2"], r["c3"], r["c4"]],
+            "scores": [r["c1"], r["c2"], r["c3"]],
             "comment": r["comment"],
         }
     return jsonify(votes)
@@ -262,17 +258,16 @@ def api_judge_votes(judge):
 @app.route("/api/results")
 def api_results():
     db = get_db()
-    rows = db.execute("SELECT group_id, c1, c2, c3, c4 FROM votes").fetchall()
+    rows = db.execute("SELECT group_id, c1, c2, c3 FROM votes").fetchall()
 
     group_scores = {}
     for r in rows:
         gid = r["group_id"]
         if gid not in group_scores:
-            group_scores[gid] = {"scores": [[], [], [], []], "count": 0}
+            group_scores[gid] = {"scores": [[], [], []], "count": 0}
         group_scores[gid]["scores"][0].append(r["c1"])
         group_scores[gid]["scores"][1].append(r["c2"])
         group_scores[gid]["scores"][2].append(r["c3"])
-        group_scores[gid]["scores"][3].append(r["c4"])
         group_scores[gid]["count"] += 1
 
     awards_result = []
