@@ -104,7 +104,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .slider-thumb:active { transform: translate(-50%, -50%) scale(1.15); cursor: grabbing; }
 .slider-ticks { display: flex; justify-content: space-between; }
 .slider-tick { display: flex; flex-direction: column; align-items: center; gap: 4px;
-  cursor: pointer; padding: 4px 0; flex: 1; }
+  cursor: pointer; padding: 4px 0; width: 0; overflow: visible; }
 .slider-tick-dot { width: 10px; height: 10px; background: var(--surface2);
   border-radius: 50%; transition: background .15s; }
 .slider-tick-dot.half { width: 7px; height: 7px; }
