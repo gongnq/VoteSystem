@@ -207,10 +207,11 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 
 /* ===== TABLET LANDSCAPE: side-by-side layout ===== */
 @media (min-width: 768px) and (orientation: landscape) {
+  .container { max-width: 100%; padding: 16px 24px; }
   .judge-workspace {
     display: grid;
-    grid-template-columns: 240px 1fr;
-    gap: 24px;
+    grid-template-columns: 220px 1fr;
+    gap: 20px;
     align-items: start;
   }
   .judge-workspace .group-grid {
