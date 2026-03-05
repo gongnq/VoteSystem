@@ -104,11 +104,12 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .slider-thumb:active { transform: translate(-50%, -50%) scale(1.15); cursor: grabbing; }
 .slider-ticks { display: flex; justify-content: space-between; }
 .slider-tick { display: flex; flex-direction: column; align-items: center; gap: 4px;
-  cursor: pointer; padding: 4px 2px; min-width: 60px; }
+  cursor: pointer; padding: 4px 0; flex: 1; }
 .slider-tick-dot { width: 10px; height: 10px; background: var(--surface2);
   border-radius: 50%; transition: background .15s; }
+.slider-tick-dot.half { width: 7px; height: 7px; }
 .slider-tick-dot.active { background: var(--primary); }
-.slider-tick-label { font-size: 0.72rem; color: var(--text2); text-align: center; }
+.slider-tick-label { font-size: 0.68rem; color: var(--text2); text-align: center; white-space: nowrap; }
 .slider-value { text-align: center; font-size: 0.85rem; font-weight: 600;
   color: var(--primary); margin-top: 4px; }
 
@@ -286,6 +287,10 @@ let activeAwardTab = 0;
 let adminRefreshTimer = null;
 
 const SCORE_LABELS = ['Poor', 'Fair', 'Average', 'Good', 'Excellent'];
+const TICK_VALUES = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+function scoreLabel(val) {
+  return Number.isInteger(val) ? SCORE_LABELS[val - 1] : SCORE_LABELS[Math.floor(val) - 1];
+}
 const CAT_COLORS = { NPI: '#0984e3', NTI: '#e17055', AI: '#a29bfe' };
 
 // ===== INIT =====
@@ -389,18 +394,18 @@ function openScoring(groupId) {
       <div class="slider-label">${crit}</div>
       <div class="slider-wrap">
         <div class="slider-track" data-idx="${i}">
-          <div class="slider-fill" style="width:${(val - 1) * 25}%"></div>
-          <div class="slider-thumb" style="left:${(val - 1) * 25}%"></div>
+          <div class="slider-fill" style="width:${(val - 1) * 12.5}%"></div>
+          <div class="slider-thumb" style="left:${(val - 1) * 12.5}%"></div>
         </div>
         <div class="slider-ticks">
-          ${SCORE_LABELS.map((l, si) => `
-            <div class="slider-tick" data-idx="${i}" data-val="${si + 1}">
-              <div class="slider-tick-dot${si + 1 === val ? ' active' : ''}"></div>
-              <div class="slider-tick-label">${l}</div>
+          ${TICK_VALUES.map(tv => `
+            <div class="slider-tick" data-idx="${i}" data-val="${tv}">
+              <div class="slider-tick-dot${tv <= val ? ' active' : ''}${Number.isInteger(tv) ? '' : ' half'}"></div>
+              <div class="slider-tick-label">${Number.isInteger(tv) ? SCORE_LABELS[tv - 1] : ''}</div>
             </div>
           `).join('')}
         </div>
-        <div class="slider-value">${SCORE_LABELS[val - 1]} (${val})</div>
+        <div class="slider-value">${scoreLabel(val)} (${val})</div>
       </div>
       <input type="hidden" class="score-input" data-idx="${i}" value="${val}">
     `;
@@ -413,7 +418,7 @@ function openScoring(groupId) {
   container.querySelectorAll('.slider-tick').forEach(tick => {
     tick.addEventListener('click', (e) => {
       const idx = parseInt(tick.dataset.idx);
-      const val = parseInt(tick.dataset.val);
+      const val = parseFloat(tick.dataset.val);
       setSliderValue(idx, val);
     });
   });
@@ -427,7 +432,7 @@ function openScoring(groupId) {
       const rect = track.getBoundingClientRect();
       let pct = (clientX - rect.left) / rect.width;
       pct = Math.max(0, Math.min(1, pct));
-      const val = Math.round(pct * 4) + 1;
+      const val = Math.round(pct * 8) / 2 + 1;
       setSliderValue(idx, val);
     }
 
@@ -463,15 +468,15 @@ function setSliderValue(idx, val) {
   const group = panel.querySelectorAll('.slider-group')[idx];
   const fill = group.querySelector('.slider-fill');
   const thumb = group.querySelector('.slider-thumb');
-  const pct = (val - 1) * 25;
+  const pct = (val - 1) * 12.5;
   fill.style.width = pct + '%';
   thumb.style.left = pct + '%';
 
   group.querySelectorAll('.slider-tick-dot').forEach((dot, i) => {
-    dot.classList.toggle('active', i < val);
+    dot.classList.toggle('active', TICK_VALUES[i] <= val);
   });
 
-  group.querySelector('.slider-value').textContent = `${SCORE_LABELS[val - 1]} (${val})`;
+  group.querySelector('.slider-value').textContent = `${scoreLabel(val)} (${val})`;
 }
 
 function closeScoring() {
@@ -483,7 +488,7 @@ function closeScoring() {
 async function submitVote() {
   const panel = document.getElementById('sliders-container');
   const scores = [];
-  panel.querySelectorAll('.score-input').forEach(inp => scores.push(parseInt(inp.value)));
+  panel.querySelectorAll('.score-input').forEach(inp => scores.push(parseFloat(inp.value)));
   const comment = document.getElementById('comment-box').value.trim();
 
   const res = await fetch('/api/vote', {

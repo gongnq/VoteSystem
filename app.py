@@ -126,10 +126,10 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             judge TEXT NOT NULL,
             group_id TEXT NOT NULL,
-            c1 INTEGER NOT NULL CHECK(c1 BETWEEN 1 AND 5),
-            c2 INTEGER NOT NULL CHECK(c2 BETWEEN 1 AND 5),
-            c3 INTEGER NOT NULL CHECK(c3 BETWEEN 1 AND 5),
-            c4 INTEGER NOT NULL CHECK(c4 BETWEEN 1 AND 5),
+            c1 REAL NOT NULL CHECK(c1 BETWEEN 1 AND 5),
+            c2 REAL NOT NULL CHECK(c2 BETWEEN 1 AND 5),
+            c3 REAL NOT NULL CHECK(c3 BETWEEN 1 AND 5),
+            c4 REAL NOT NULL CHECK(c4 BETWEEN 1 AND 5),
             comment TEXT DEFAULT '',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(judge, group_id)
@@ -182,9 +182,9 @@ def pwa_icon():
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}">
       <rect width="{size}" height="{size}" rx="40" fill="#6c5ce7"/>
       <text x="50%" y="42%" dominant-baseline="middle" text-anchor="middle"
-            font-family="sans-serif" font-weight="bold" font-size="{size//6}" fill="#fff">Demo</text>
+            font-family="sans-serif" font-weight="bold" font-size="{size//6}" fill="#fff">DEMO</text>
       <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle"
-            font-family="sans-serif" font-weight="bold" font-size="{size//6}" fill="#fff">Crawl</text>
+            font-family="sans-serif" font-weight="bold" font-size="{size//6}" fill="#fff">CRAWL</text>
     </svg>"""
     return Response(svg, mimetype="image/svg+xml")
 
@@ -225,8 +225,8 @@ def api_vote():
     if not isinstance(scores, list) or len(scores) != 4:
         return jsonify({"error": "Scores must be a list of 4 integers"}), 400
     for s in scores:
-        if not isinstance(s, int) or s < 1 or s > 5:
-            return jsonify({"error": "Each score must be 1-5"}), 400
+        if not isinstance(s, (int, float)) or s < 1 or s > 5 or (s * 2) != int(s * 2):
+            return jsonify({"error": "Each score must be 1-5 in 0.5 steps"}), 400
 
     db = get_db()
     db.execute("""
