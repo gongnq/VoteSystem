@@ -181,8 +181,10 @@ def pwa_icon():
     size = 512 if "512" in request.path else 192
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}">
       <rect width="{size}" height="{size}" rx="40" fill="#6c5ce7"/>
-      <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle"
-            font-family="sans-serif" font-weight="bold" font-size="{size//6}" fill="#fff">DemoCrawl</text>
+      <text x="50%" y="42%" dominant-baseline="middle" text-anchor="middle"
+            font-family="sans-serif" font-weight="bold" font-size="{size//6}" fill="#fff">Demo</text>
+      <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle"
+            font-family="sans-serif" font-weight="bold" font-size="{size//6}" fill="#fff">Crawl</text>
     </svg>"""
     return Response(svg, mimetype="image/svg+xml")
 
