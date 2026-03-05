@@ -177,6 +177,19 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .judge-cell.complete .judge-cell-fill { background: var(--success); }
 
 /* ===== RESPONSIVE ===== */
+/* ===== INSTALL BANNER ===== */
+.install-banner { position: fixed; bottom: 0; left: 0; right: 0; z-index: 900;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 16px 20px; display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.4); }
+.install-banner-icon { font-size: 2rem; flex-shrink: 0; }
+.install-banner-text { flex: 1; }
+.install-banner-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+.install-banner-desc { font-size: 0.82rem; color: var(--text2); line-height: 1.4; }
+.install-banner-close { background: none; border: none; color: var(--text2);
+  font-size: 1.4rem; padding: 4px 8px; flex-shrink: 0; }
+.install-banner-close:hover { color: var(--text); }
+
 @media (max-width: 600px) {
   .container { padding: 12px; }
   .group-grid { grid-template-columns: 1fr; }
@@ -187,6 +200,16 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 </style>
 </head>
 <body>
+
+<!-- ===== INSTALL BANNER ===== -->
+<div class="install-banner hidden" id="install-banner">
+  <div class="install-banner-icon">📲</div>
+  <div class="install-banner-text">
+    <div class="install-banner-title">Add to Home Screen</div>
+    <div class="install-banner-desc" id="install-desc"></div>
+  </div>
+  <button class="install-banner-close" onclick="dismissInstall()">&times;</button>
+</div>
 
 <!-- ===== TOAST ===== -->
 <div class="toast" id="toast"></div>
@@ -618,6 +641,32 @@ function showToast(msg) {
 // ===== PWA =====
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
+}
+
+// ===== INSTALL BANNER =====
+(function() {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  const dismissed = localStorage.getItem('install-dismissed');
+  if (isStandalone || dismissed) return;
+
+  const banner = document.getElementById('install-banner');
+  const desc = document.getElementById('install-desc');
+  const ua = navigator.userAgent.toLowerCase();
+
+  if (ua.includes('silk')) {
+    desc.innerHTML = 'Tap the <b>menu (&#8942;)</b> &rarr; <b>"Add to Home Screen"</b> for a fullscreen app experience.';
+  } else if (/iphone|ipad|ipod/.test(ua)) {
+    desc.innerHTML = 'Tap the <b>Share</b> button (&#9757;) &rarr; <b>"Add to Home Screen"</b> for a fullscreen app experience.';
+  } else {
+    desc.innerHTML = 'Tap the <b>browser menu</b> &rarr; <b>"Add to Home Screen"</b> or <b>"Install App"</b>.';
+  }
+  banner.classList.remove('hidden');
+})();
+
+function dismissInstall() {
+  document.getElementById('install-banner').classList.add('hidden');
+  localStorage.setItem('install-dismissed', '1');
 }
 
 // ===== START =====
