@@ -182,7 +182,7 @@ def pwa_icon():
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}">
       <rect width="{size}" height="{size}" rx="40" fill="#6c5ce7"/>
       <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle"
-            font-family="sans-serif" font-weight="bold" font-size="{size//4}" fill="#fff">VOTE</text>
+            font-family="sans-serif" font-weight="bold" font-size="{size//6}" fill="#fff">DemoCrawl</text>
     </svg>"""
     return Response(svg, mimetype="image/svg+xml")
 
