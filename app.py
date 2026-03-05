@@ -28,7 +28,8 @@
 
 import os
 import sqlite3
-from flask import Flask, request, jsonify, render_template, g
+import json as json_mod
+from flask import Flask, request, jsonify, render_template, g, Response
 
 app = Flask(__name__)
 
@@ -144,6 +145,46 @@ def init_db():
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/manifest.json")
+def manifest():
+    m = {
+        "name": "2026 Asia Demo Crawl",
+        "short_name": "Demo Crawl",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#0f1117",
+        "theme_color": "#0f1117",
+        "icons": [
+            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"},
+        ],
+    }
+    return Response(json_mod.dumps(m), mimetype="application/manifest+json")
+
+
+@app.route("/sw.js")
+def service_worker():
+    sw = """
+self.addEventListener('install', e => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
+"""
+    return Response(sw.strip(), mimetype="application/javascript")
+
+
+@app.route("/icon-192.png")
+@app.route("/icon-512.png")
+def pwa_icon():
+    """Generate a simple SVG-based PNG placeholder icon."""
+    size = 512 if "512" in request.path else 192
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}">
+      <rect width="{size}" height="{size}" rx="40" fill="#6c5ce7"/>
+      <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle"
+            font-family="sans-serif" font-weight="bold" font-size="{size//4}" fill="#fff">VOTE</text>
+    </svg>"""
+    return Response(svg, mimetype="image/svg+xml")
 
 
 @app.route("/api/config")
