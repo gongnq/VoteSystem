@@ -220,7 +220,10 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   .judge-workspace .group-grid {
     grid-template-columns: 1fr;
     gap: 4px;
+    min-height: calc(100vh - 140px);
+    align-content: stretch;
   }
+  .judge-workspace .group-card { flex: 1; }
   .judge-workspace .group-card {
     padding: 8px 10px;
     gap: 8px;
