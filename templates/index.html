@@ -71,9 +71,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   border-radius: var(--radius); padding: 16px; cursor: pointer;
   transition: all .15s; display: flex; align-items: center; gap: 14px; }
 .group-card:hover { border-color: var(--primary); transform: translateY(-1px); }
-.group-card.scored { border-color: var(--success); background: var(--success); color: #fff; }
-.group-card.scored .badge { background: rgba(255,255,255,.2); color: #fff; }
-.group-card.scored .group-name { color: #fff; }
+.group-card.scored { border-color: var(--success); border-left: 4px solid var(--success); background: var(--surface2); }
 .group-card.active { border-color: var(--primary); background: var(--surface2); }
 .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem;
   font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
