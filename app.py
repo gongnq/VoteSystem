@@ -94,7 +94,7 @@ AWARDS = [
 ADMIN_PIN = os.environ.get("ADMIN_PIN", "2026")
 
 # Session lock timeout in seconds — if no heartbeat within this period, lock expires
-SESSION_TIMEOUT = 60
+SESSION_TIMEOUT = 300
 
 DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "votes.db")
 

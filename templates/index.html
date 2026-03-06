@@ -208,29 +208,58 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 
 /* ===== TABLET LANDSCAPE: side-by-side layout ===== */
 @media (min-width: 768px) and (orientation: landscape) {
-  .container { max-width: 100%; padding: 16px 24px; }
+  .container { max-width: 100%; padding: 12px 24px; }
+  .header { padding: 8px 0; margin-bottom: 12px; }
+  .progress-wrap { margin-bottom: 12px; }
   .judge-workspace {
     display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 20px;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
     align-items: start;
   }
   .judge-workspace .group-grid {
     grid-template-columns: 1fr;
-    gap: 10px;
-    max-height: calc(100vh - 180px);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    gap: 4px;
   }
+  .judge-workspace .group-card {
+    padding: 8px 10px;
+    gap: 8px;
+    border-radius: var(--radius-sm);
+  }
+  .judge-workspace .group-card .badge { padding: 2px 6px; font-size: 0.62rem; }
+  .judge-workspace .group-card .group-name { font-size: 0.82rem; }
+  .judge-workspace .group-card .check-icon { font-size: 0.9rem; }
   .judge-workspace .scoring-panel {
     position: sticky;
-    top: 20px;
+    top: 12px;
     margin-top: 0;
-    max-height: calc(100vh - 120px);
+    max-height: calc(100vh - 100px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* ===== COUNTDOWN TIMER ===== */
+.countdown-ring {
+  position: relative; width: 40px; height: 40px; flex-shrink: 0;
+}
+.countdown-ring svg { transform: rotate(-90deg); }
+.countdown-ring circle {
+  fill: none; stroke-width: 3; cx: 20; cy: 20; r: 17;
+}
+.countdown-ring .ring-bg { stroke: var(--surface2); }
+.countdown-ring .ring-fg {
+  stroke: var(--text2); stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear, stroke .3s;
+}
+.countdown-ring.warn .ring-fg { stroke: var(--warning); }
+.countdown-ring.urgent .ring-fg { stroke: #e74c3c; }
+.countdown-time {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; font-size: 0.58rem; font-weight: 600; color: var(--text2);
+}
+.countdown-ring.warn .countdown-time { color: var(--warning); }
+.countdown-ring.urgent .countdown-time { color: #e74c3c; }
 </style>
 </head>
 <body>
@@ -280,7 +309,17 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
           <h3 id="scoring-group-name"></h3>
           <span class="badge" id="scoring-badge"></span>
         </div>
-        <button class="btn btn-outline btn-sm" onclick="closeScoring()">Close</button>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="countdown-ring" id="countdown-ring" title="Time on this project">
+            <svg width="40" height="40">
+              <circle class="ring-bg" r="17" cx="20" cy="20"/>
+              <circle class="ring-fg" id="countdown-fg" r="17" cx="20" cy="20"
+                stroke-dasharray="106.81" stroke-dashoffset="0"/>
+            </svg>
+            <div class="countdown-time" id="countdown-time">5:00</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="closeScoring()">Close</button>
+        </div>
       </div>
       <div id="sliders-container"></div>
       <div class="submit-row">
@@ -416,7 +455,7 @@ async function loginAsJudge() {
 
   // Start heartbeat every 20s
   if (heartbeatTimer) clearInterval(heartbeatTimer);
-  heartbeatTimer = setInterval(sendHeartbeat, 20000);
+  heartbeatTimer = setInterval(sendHeartbeat, 60000);
 
   const res = await fetch(`/api/votes/${encodeURIComponent(currentJudge)}`);
   judgeVotes = await res.json();
@@ -545,6 +584,7 @@ function openScoring(groupId) {
   });
 
   document.getElementById('scoring-panel').classList.remove('hidden');
+  startCountdown();
   renderGroupGrid();
 
   // In landscape tablet, scoring panel is beside the grid — no need to scroll
@@ -573,8 +613,50 @@ function setSliderValue(idx, val) {
   group.querySelector('.slider-value').textContent = `${scoreLabel(val)} (${val})`;
 }
 
+// ===== COUNTDOWN TIMER =====
+const COUNTDOWN_TOTAL = 300; // 5 minutes
+const RING_CIRCUMFERENCE = 2 * Math.PI * 17; // ~106.81
+let countdownTimer = null;
+let countdownRemaining = 0;
+
+function startCountdown() {
+  stopCountdown();
+  countdownRemaining = COUNTDOWN_TOTAL;
+  updateCountdownDisplay();
+  countdownTimer = setInterval(() => {
+    countdownRemaining--;
+    updateCountdownDisplay();
+    if (countdownRemaining <= 0) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+  }, 1000);
+}
+
+function stopCountdown() {
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+}
+
+function updateCountdownDisplay() {
+  const ring = document.getElementById('countdown-ring');
+  const fg = document.getElementById('countdown-fg');
+  const label = document.getElementById('countdown-time');
+
+  const secs = Math.max(0, countdownRemaining);
+  const min = Math.floor(secs / 60);
+  const sec = secs % 60;
+  label.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+
+  const progress = secs / COUNTDOWN_TOTAL;
+  fg.setAttribute('stroke-dashoffset', ((1 - progress) * RING_CIRCUMFERENCE).toFixed(1));
+
+  ring.classList.toggle('warn', secs <= 60 && secs > 0);
+  ring.classList.toggle('urgent', secs <= 0);
+}
+
 function closeScoring() {
   currentGroupId = null;
+  stopCountdown();
   document.getElementById('scoring-panel').classList.add('hidden');
   renderGroupGrid();
 }
