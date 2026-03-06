@@ -71,7 +71,10 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   border-radius: var(--radius); padding: 16px; cursor: pointer;
   transition: all .15s; display: flex; align-items: center; gap: 14px; }
 .group-card:hover { border-color: var(--primary); transform: translateY(-1px); }
-.group-card.scored { border-color: var(--success); border-left: 4px solid var(--success); background: var(--surface2); }
+.group-card.scored { border-color: var(--success); background: var(--success); color: #fff; }
+.group-card.scored .badge { background: rgba(255,255,255,.2); color: #fff; }
+.group-card.scored .group-name { color: #fff; }
+.group-card.scored .check-icon { color: #fff; }
 .group-card.active { border-color: var(--primary); background: var(--surface2); }
 .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem;
   font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
@@ -326,6 +329,8 @@ let currentGroupId = null;
 let judgeVotes = {};
 let activeAwardTab = 0;
 let adminRefreshTimer = null;
+let heartbeatTimer = null;
+const SESSION_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
 
 const SCORE_LABELS = ['Poor', 'Fair', 'Average', 'Good', 'Excellent'];
 const TICK_VALUES = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
@@ -338,14 +343,23 @@ const CAT_COLORS = { NPI: '#0984e3', NTI: '#e17055', AI: '#a29bfe' };
 async function init() {
   const res = await fetch('/api/config');
   CONFIG = await res.json();
-  populateJudgeSelect();
+  await populateJudgeSelect();
 }
 
-function populateJudgeSelect() {
+async function populateJudgeSelect() {
   const sel = document.getElementById('judge-select');
+  // Clear existing options (keep placeholder)
+  while (sel.options.length > 1) sel.remove(1);
+
+  const lockedRes = await fetch('/api/judge/locked');
+  const lockedJudges = await lockedRes.json();
+
   CONFIG.judges.forEach(j => {
     const opt = document.createElement('option');
-    opt.value = j; opt.textContent = j;
+    opt.value = j;
+    const isLocked = lockedJudges.includes(j);
+    opt.textContent = isLocked ? `${j} (in use)` : j;
+    opt.disabled = isLocked;
     sel.appendChild(opt);
   });
 }
@@ -364,18 +378,45 @@ function showView(id) {
 function showLogin() { showView('view-login'); }
 function showAdminLogin() { showView('view-admin-pin'); document.getElementById('pin-input').value = ''; }
 
-function logout() {
+async function logout() {
+  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+  if (currentJudge) {
+    await fetch('/api/judge/unlock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ judge: currentJudge, session_id: SESSION_ID }),
+    }).catch(() => {});
+  }
   currentJudge = null;
   judgeVotes = {};
   showView('view-login');
+  await populateJudgeSelect();
 }
 
 // ===== JUDGE LOGIN =====
 async function loginAsJudge() {
   const sel = document.getElementById('judge-select');
   if (!sel.value) return;
+
+  // Try to acquire lock
+  const lockRes = await fetch('/api/judge/lock', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ judge: sel.value, session_id: SESSION_ID }),
+  });
+  if (!lockRes.ok) {
+    const err = await lockRes.json();
+    showToast(err.error || 'This judge is already in use');
+    await populateJudgeSelect();  // refresh list
+    return;
+  }
+
   currentJudge = sel.value;
   document.getElementById('judge-label').textContent = currentJudge;
+
+  // Start heartbeat every 20s
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(sendHeartbeat, 20000);
 
   const res = await fetch(`/api/votes/${encodeURIComponent(currentJudge)}`);
   judgeVotes = await res.json();
@@ -383,6 +424,15 @@ async function loginAsJudge() {
   renderGroupGrid();
   closeScoring();
   showView('view-judge');
+}
+
+function sendHeartbeat() {
+  if (!currentJudge) return;
+  fetch('/api/judge/heartbeat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ judge: currentJudge, session_id: SESSION_ID }),
+  }).catch(() => {});
 }
 
 // ===== GROUP GRID =====
@@ -676,6 +726,15 @@ window.addEventListener('orientationchange', () => {
     const panel = document.getElementById('scoring-panel');
     if (panel) panel.scrollTop = 0;
   }, 200);
+});
+
+// ===== PAGE UNLOAD: release lock =====
+window.addEventListener('beforeunload', () => {
+  if (currentJudge) {
+    navigator.sendBeacon('/api/judge/unlock',
+      new Blob([JSON.stringify({ judge: currentJudge, session_id: SESSION_ID })],
+        { type: 'application/json' }));
+  }
 });
 
 // ===== PWA =====

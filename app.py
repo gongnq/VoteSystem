@@ -28,6 +28,7 @@
 
 import os
 import sqlite3
+import time
 import json as json_mod
 from flask import Flask, request, jsonify, render_template, g, Response
 
@@ -43,14 +44,12 @@ JUDGES = ["Rob", "Regien", "Adam", "Amit", "Alok", "Prasad", "Volker", "Toby", "
 # ---------------------------------------------------------------------------
 GROUPS = (
     [("NPI-1", "Group NPI-1", "NPI"), ("NPI-2", "Group NPI-2", "NPI"),
-     ("NPI-3", "Group NPI-3", "NPI"), ("NPI-4", "Group NPI-4", "NPI"),
-     ("NPI-5", "Group NPI-5", "NPI"), ("NPI-6", "Group NPI-6", "NPI")]
+     ("NPI-3", "Group NPI-3", "NPI")]
     + [("NTI-1", "Group NTI-1", "NTI"), ("NTI-2", "Group NTI-2", "NTI"),
-       ("NTI-3", "Group NTI-3", "NTI"), ("NTI-4", "Group NTI-4", "NTI"),
-       ("NTI-5", "Group NTI-5", "NTI"), ("NTI-6", "Group NTI-6", "NTI")]
+       ("NTI-3", "Group NTI-3", "NTI"), ("NTI-4", "Group NTI-4", "NTI")]
     + [("AI-1", "Group AI-1", "AI"), ("AI-2", "Group AI-2", "AI"),
        ("AI-3", "Group AI-3", "AI"), ("AI-4", "Group AI-4", "AI"),
-       ("AI-5", "Group AI-5", "AI"), ("AI-6", "Group AI-6", "AI")]
+       ("AI-5", "Group AI-5", "AI")]
 )
 
 # ---------------------------------------------------------------------------
@@ -79,7 +78,7 @@ AWARDS = [
     },
     {
         "name": "Customer Delight Award",
-        "categories": None,  # all 18 groups
+        "categories": None,  # all groups
         "weights": {1: 1},   # only Customer Delight (index 1)
     },
     {
@@ -93,6 +92,9 @@ AWARDS = [
 # ADMIN PIN
 # ---------------------------------------------------------------------------
 ADMIN_PIN = os.environ.get("ADMIN_PIN", "2026")
+
+# Session lock timeout in seconds — if no heartbeat within this period, lock expires
+SESSION_TIMEOUT = 60
 
 DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "votes.db")
 
@@ -129,6 +131,13 @@ def init_db():
             comment TEXT DEFAULT '',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(judge, group_id)
+        )
+    """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS judge_sessions (
+            judge TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            last_heartbeat REAL NOT NULL
         )
     """)
     db.commit()
@@ -201,6 +210,88 @@ def api_config():
                      "weights": {str(k): v for k, v in a["weights"].items()}}
                     for a in AWARDS],
     })
+
+
+@app.route("/api/judge/lock", methods=["POST"])
+def api_judge_lock():
+    """Attempt to lock a judge name for this session."""
+    data = request.get_json(force=True)
+    judge = data.get("judge", "").strip()
+    session_id = data.get("session_id", "").strip()
+
+    if judge not in JUDGES or not session_id:
+        return jsonify({"error": "Invalid judge or session"}), 400
+
+    db = get_db()
+    now = time.time()
+
+    row = db.execute(
+        "SELECT session_id, last_heartbeat FROM judge_sessions WHERE judge = ?",
+        (judge,),
+    ).fetchone()
+
+    if row and row["session_id"] != session_id:
+        if now - row["last_heartbeat"] < SESSION_TIMEOUT:
+            return jsonify({"error": "This judge is already in use on another device"}), 409
+
+    db.execute("""
+        INSERT INTO judge_sessions (judge, session_id, last_heartbeat)
+        VALUES (?, ?, ?)
+        ON CONFLICT(judge)
+        DO UPDATE SET session_id=excluded.session_id, last_heartbeat=excluded.last_heartbeat
+    """, (judge, session_id, now))
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/judge/heartbeat", methods=["POST"])
+def api_judge_heartbeat():
+    """Keep the judge session alive."""
+    data = request.get_json(force=True)
+    judge = data.get("judge", "").strip()
+    session_id = data.get("session_id", "").strip()
+
+    if judge not in JUDGES or not session_id:
+        return jsonify({"error": "Invalid"}), 400
+
+    db = get_db()
+    result = db.execute("""
+        UPDATE judge_sessions SET last_heartbeat = ?
+        WHERE judge = ? AND session_id = ?
+    """, (time.time(), judge, session_id))
+    db.commit()
+
+    if result.rowcount == 0:
+        return jsonify({"error": "Session expired"}), 410
+    return jsonify({"ok": True})
+
+
+@app.route("/api/judge/unlock", methods=["POST"])
+def api_judge_unlock():
+    """Release the judge lock on logout."""
+    data = request.get_json(force=True)
+    judge = data.get("judge", "").strip()
+    session_id = data.get("session_id", "").strip()
+
+    db = get_db()
+    db.execute(
+        "DELETE FROM judge_sessions WHERE judge = ? AND session_id = ?",
+        (judge, session_id),
+    )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/judge/locked")
+def api_judge_locked():
+    """Return list of currently locked judge names."""
+    db = get_db()
+    now = time.time()
+    rows = db.execute(
+        "SELECT judge FROM judge_sessions WHERE last_heartbeat > ?",
+        (now - SESSION_TIMEOUT,),
+    ).fetchall()
+    return jsonify([r["judge"] for r in rows])
 
 
 @app.route("/api/vote", methods=["POST"])
