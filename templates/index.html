@@ -213,14 +213,21 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   .progress-wrap { margin-bottom: 12px; }
   .judge-workspace {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
     align-items: start;
   }
   .judge-workspace .group-grid {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 4px;
   }
+  .judge-workspace .group-card {
+    padding: 8px 12px;
+    gap: 8px;
+    border-radius: var(--radius-sm);
+  }
+  .judge-workspace .group-card .group-name { font-size: 0.88rem; }
+  .judge-workspace .group-card .check-icon { font-size: 0.95rem; }
   .judge-workspace .scoring-panel {
     position: sticky;
     top: 12px;
