@@ -115,6 +115,8 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .slider-tick-label { font-size: 0.68rem; color: var(--text2); text-align: center; white-space: nowrap; }
 .slider-value { text-align: center; font-size: 0.85rem; font-weight: 600;
   color: var(--primary); margin-top: 4px; }
+.slider-desc { text-align: center; font-size: 0.75rem; color: var(--text2);
+  margin-top: 2px; min-height: 1.1em; transition: opacity .2s; }
 
 /* ===== SUBMIT ===== */
 .submit-row { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
@@ -374,10 +376,10 @@ let adminRefreshTimer = null;
 let heartbeatTimer = null;
 const SESSION_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-const SCORE_LABELS = ['Poor', 'Fair', 'Average', 'Good', 'Excellent'];
-const TICK_VALUES = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+const SCORE_LABELS = { 2: 'Fair', 3: 'Average', 4: 'Good', 5: 'Excellent' };
+const TICK_VALUES = [2, 2.5, 3, 3.5, 4, 4.5, 5];
 function scoreLabel(val) {
-  return Number.isInteger(val) ? SCORE_LABELS[val - 1] : SCORE_LABELS[Math.floor(val) - 1];
+  return SCORE_LABELS[Math.floor(val)] || '';
 }
 const CAT_COLORS = { NPI: '#0984e3', NTI: '#e17055', AI: '#a29bfe' };
 
@@ -519,26 +521,32 @@ function openScoring(groupId) {
 
   const existing = judgeVotes[groupId];
 
+  const descriptions = CONFIG.criteria_descriptions || {};
+
   group.criteria.forEach((crit, i) => {
     const val = existing ? existing.scores[i] : 3;
+    const pct = (val - 2) / 3 * 100;
+    const critDescs = descriptions[crit] || {};
+    const desc = critDescs[String(Math.floor(val))] || '';
     const div = document.createElement('div');
     div.className = 'slider-group';
     div.innerHTML = `
       <div class="slider-label">${crit}</div>
       <div class="slider-wrap">
-        <div class="slider-track" data-idx="${i}">
-          <div class="slider-fill" style="width:${(val - 1) * 25}%"></div>
-          <div class="slider-thumb" style="left:${(val - 1) * 25}%"></div>
+        <div class="slider-track" data-idx="${i}" data-crit="${crit}">
+          <div class="slider-fill" style="width:${pct}%"></div>
+          <div class="slider-thumb" style="left:${pct}%"></div>
         </div>
         <div class="slider-ticks">
           ${TICK_VALUES.map(tv => `
             <div class="slider-tick" data-idx="${i}" data-val="${tv}">
               <div class="slider-tick-dot${tv <= val ? ' active' : ''}${Number.isInteger(tv) ? '' : ' half'}"></div>
-              <div class="slider-tick-label">${Number.isInteger(tv) ? SCORE_LABELS[tv - 1] : ''}</div>
+              <div class="slider-tick-label">${Number.isInteger(tv) ? SCORE_LABELS[tv] : ''}</div>
             </div>
           `).join('')}
         </div>
         <div class="slider-value">${scoreLabel(val)} (${val})</div>
+        <div class="slider-desc">${desc}</div>
       </div>
       <input type="hidden" class="score-input" data-idx="${i}" value="${val}">
     `;
@@ -563,7 +571,7 @@ function openScoring(groupId) {
       const rect = track.getBoundingClientRect();
       let pct = (clientX - rect.left) / rect.width;
       pct = Math.max(0, Math.min(1, pct));
-      const val = Math.round(pct * 8) / 2 + 1;
+      const val = Math.round(pct * 6) / 2 + 2;
       setSliderValue(idx, val);
     }
 
@@ -605,7 +613,8 @@ function setSliderValue(idx, val) {
   const group = panel.querySelectorAll('.slider-group')[idx];
   const fill = group.querySelector('.slider-fill');
   const thumb = group.querySelector('.slider-thumb');
-  const pct = (val - 1) * 25;
+  const track = group.querySelector('.slider-track');
+  const pct = (val - 2) / 3 * 100;
   fill.style.width = pct + '%';
   thumb.style.left = pct + '%';
 
@@ -614,6 +623,12 @@ function setSliderValue(idx, val) {
   });
 
   group.querySelector('.slider-value').textContent = `${scoreLabel(val)} (${val})`;
+
+  const crit = track.dataset.crit;
+  const descriptions = CONFIG.criteria_descriptions || {};
+  const critDescs = descriptions[crit] || {};
+  const desc = critDescs[String(Math.floor(val))] || '';
+  group.querySelector('.slider-desc').textContent = desc;
 }
 
 // ===== COUNTDOWN TIMER =====

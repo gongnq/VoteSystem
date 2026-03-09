@@ -43,13 +43,17 @@ JUDGES = ["Rob", "Regien", "Adam", "Amit", "Alok", "Prasad", "Volker", "Toby", "
 # GROUPS — (id, display_name, category)
 # ---------------------------------------------------------------------------
 GROUPS = (
-    [("NPI-1", "Group NPI-1", "NPI"), ("NPI-2", "Group NPI-2", "NPI"),
-     ("NPI-3", "Group NPI-3", "NPI")]
-    + [("NTI-1", "Group NTI-1", "NTI"), ("NTI-2", "Group NTI-2", "NTI"),
-       ("NTI-3", "Group NTI-3", "NTI"), ("NTI-4", "Group NTI-4", "NTI")]
-    + [("AI-1", "Group AI-1", "AI"), ("AI-2", "Group AI-2", "AI"),
-       ("AI-3", "Group AI-3", "AI"), ("AI-4", "Group AI-4", "AI"),
-       ("AI-5", "Group AI-5", "AI")]
+    [("NTI-1", "An Inner Spider Speaker Construction", "NTI"),
+     ("NTI-2", "Edge to Edge Display Cover Lens", "NTI"),
+     ("NTI-3", "BOBArtender - AI-Powered Bubble Tea", "NTI")]
+    + [("NPI-1", "Echo Frames Reimagined", "NPI"),
+       ("NPI-2", "Alexa UI Plus - Fire TV Smart Scene", "NPI"),
+       ("NPI-3", "Pulse ID", "NPI")]
+    + [("AI-1", "Stratos", "AI"),
+       ("AI-2", "Multi-Modal Competitive Intelligence", "AI"),
+       ("AI-3", "Hercules: Cloud-based AI/ML Platform", "AI"),
+       ("AI-4", "Manufacturing Smart Assistant", "AI"),
+       ("AI-5", "Intelligent Quality: AI Battery Mfg", "AI")]
 )
 
 # ---------------------------------------------------------------------------
@@ -59,6 +63,42 @@ CRITERIA_BY_CATEGORY = {
     "NPI": ["Innovation/Originality", "Customer Delight", "Market Opportunity"],
     "NTI": ["Innovation/Originality", "Customer Delight", "Feasibility/Practicality"],
     "AI":  ["Innovation/Originality", "Customer Delight", "AI Practicality"],
+}
+
+# ---------------------------------------------------------------------------
+# CRITERIA DESCRIPTIONS — concise hints shown on the slider per score level
+# ---------------------------------------------------------------------------
+CRITERIA_DESCRIPTIONS = {
+    "Innovation/Originality": {
+        2: "Limited; mostly derivative",
+        3: "Moderate; incremental improvement",
+        4: "Significant; creative approach",
+        5: "Breakthrough; paradigm-shifting",
+    },
+    "Customer Delight": {
+        2: "Minor needs; limited impact",
+        3: "Basic needs; moderate improvement",
+        4: "Important needs; meaningful value",
+        5: "Critical pain points; transformative",
+    },
+    "Feasibility/Practicality": {
+        2: "Challenging; high uncertainty",
+        3: "Achievable; some uncertainties",
+        4: "Feasible; manageable challenges",
+        5: "Highly feasible; clear path",
+    },
+    "Market Opportunity": {
+        2: "Small/saturated; unclear growth",
+        3: "Steady growth; niche appeal",
+        4: "Strong demand; good potential",
+        5: "New category; exceptional potential",
+    },
+    "AI Practicality": {
+        2: "Challenging; high uncertainty",
+        3: "Achievable; some uncertainties",
+        4: "Feasible; manageable challenges",
+        5: "Highly feasible; clear path",
+    },
 }
 
 # ---------------------------------------------------------------------------
@@ -125,9 +165,9 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             judge TEXT NOT NULL,
             group_id TEXT NOT NULL,
-            c1 REAL NOT NULL CHECK(c1 BETWEEN 1 AND 5),
-            c2 REAL NOT NULL CHECK(c2 BETWEEN 1 AND 5),
-            c3 REAL NOT NULL CHECK(c3 BETWEEN 1 AND 5),
+            c1 REAL NOT NULL CHECK(c1 BETWEEN 2 AND 5),
+            c2 REAL NOT NULL CHECK(c2 BETWEEN 2 AND 5),
+            c3 REAL NOT NULL CHECK(c3 BETWEEN 2 AND 5),
             comment TEXT DEFAULT '',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(judge, group_id)
@@ -209,6 +249,10 @@ def api_config():
                      "categories": a["categories"],
                      "weights": {str(k): v for k, v in a["weights"].items()}}
                     for a in AWARDS],
+        "criteria_descriptions": {
+            crit: {str(k): v for k, v in descs.items()}
+            for crit, descs in CRITERIA_DESCRIPTIONS.items()
+        },
     })
 
 
@@ -312,8 +356,8 @@ def api_vote():
     if not isinstance(scores, list) or len(scores) != 3:
         return jsonify({"error": "Scores must be a list of 3 numbers"}), 400
     for s in scores:
-        if not isinstance(s, (int, float)) or s < 1 or s > 5 or (s * 2) != int(s * 2):
-            return jsonify({"error": "Each score must be 1-5 in 0.5 steps"}), 400
+        if not isinstance(s, (int, float)) or s < 2 or s > 5 or (s * 2) != int(s * 2):
+            return jsonify({"error": "Each score must be 2-5 in 0.5 steps"}), 400
 
     db = get_db()
     db.execute("""
