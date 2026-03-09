@@ -3,10 +3,10 @@ runtime: python311
 build:
   commands:
     pre-build:
-      - pip install --upgrade pip
+      - python -m pip install --upgrade pip
     build:
-      - pip install -r requirements.txt
+      - python -m pip install --no-cache-dir -r requirements.txt
 run:
-  command: gunicorn --bind 0.0.0.0:8080 --workers 2 --threads 2 app:app
+  command: python -m gunicorn --bind 0.0.0.0:8080 --workers 2 --threads 2 app:app
   network:
     port: 8080
