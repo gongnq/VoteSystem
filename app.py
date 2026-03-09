@@ -43,17 +43,17 @@ JUDGES = ["Rob", "Regien", "Adam", "Amit", "Alok", "Prasad", "Volker", "Toby", "
 # GROUPS — (id, display_name, category)
 # ---------------------------------------------------------------------------
 GROUPS = (
-    [("NTI-1", "An Inner Spider Speaker Construction", "NTI"),
-     ("NTI-2", "Edge to Edge Display Cover Lens", "NTI"),
-     ("NTI-3", "BOBArtender - AI-Powered Bubble Tea", "NTI")]
-    + [("NPI-1", "Echo Frames Reimagined", "NPI"),
-       ("NPI-2", "Alexa UI Plus - Fire TV Smart Scene", "NPI"),
-       ("NPI-3", "Pulse ID", "NPI")]
-    + [("AI-1", "Stratos", "AI"),
-       ("AI-2", "Multi-Modal Competitive Intelligence", "AI"),
-       ("AI-3", "Hercules: Cloud-based AI/ML Platform", "AI"),
-       ("AI-4", "Manufacturing Smart Assistant", "AI"),
-       ("AI-5", "Intelligent Quality: AI Battery Mfg", "AI")]
+    [("NTI-1", "1. An Inner Spider Speaker Construction", "NTI"),
+     ("NTI-2", "2. Edge to Edge Display Cover Lens", "NTI"),
+     ("NTI-3", "3. BOBArtender - AI-Powered Bubble Tea", "NTI")]
+    + [("NPI-1", "4. Echo Frames Reimagined", "NPI"),
+       ("NPI-2", "5. Alexa UI Plus - Fire TV Smart Scene", "NPI"),
+       ("NPI-3", "6. Pulse ID", "NPI")]
+    + [("AI-1", "7. Stratos", "AI"),
+       ("AI-2", "8. Multi-Modal Competitive Intelligence", "AI"),
+       ("AI-3", "9. Hercules: Cloud-based AI/ML Platform", "AI"),
+       ("AI-4", "10. Manufacturing Smart Assistant", "AI"),
+       ("AI-5", "11. Intelligent Quality: AI Battery Mfg", "AI")]
 )
 
 # ---------------------------------------------------------------------------
