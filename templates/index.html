@@ -208,33 +208,49 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   .group-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
 }
 
-/* ===== TABLET LANDSCAPE: side-by-side layout ===== */
+/* ===== TABLET LANDSCAPE ===== */
 @media (min-width: 768px) and (orientation: landscape) {
   .container { max-width: 100%; padding: 12px 24px; }
   .header { padding: 8px 0; margin-bottom: 12px; }
   .progress-wrap { margin-bottom: 12px; }
-  .judge-workspace {
+
+  /* --- Main view: full-page grid, big cards --- */
+  .judge-workspace .group-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    min-height: calc(100vh - 140px);
+    align-content: stretch;
+  }
+  .judge-workspace .group-card {
+    flex: 1;
+    padding: 16px 18px;
+    gap: 12px;
+    justify-content: center;
+  }
+  .judge-workspace .group-card .group-name { font-size: 1rem; }
+
+  /* --- Scoring view: side-by-side --- */
+  .judge-workspace.scoring-active {
     display: grid;
     grid-template-columns: 220px 1fr;
     gap: 16px;
     align-items: start;
   }
-  .judge-workspace .group-grid {
+  .judge-workspace.scoring-active .group-grid {
     grid-template-columns: 1fr;
     gap: 4px;
     min-height: calc(100vh - 140px);
-    align-content: stretch;
   }
-  .judge-workspace .group-card { flex: 1; }
-  .judge-workspace .group-card {
+  .judge-workspace.scoring-active .group-card {
     padding: 8px 10px;
     gap: 8px;
     border-radius: var(--radius-sm);
+    justify-content: flex-start;
   }
-  .judge-workspace .group-card .badge { padding: 2px 6px; font-size: 0.62rem; }
-  .judge-workspace .group-card .group-name { font-size: 0.82rem; }
-  .judge-workspace .group-card .check-icon { font-size: 0.9rem; }
-  .judge-workspace .scoring-panel {
+  .judge-workspace.scoring-active .group-card .badge { padding: 2px 6px; font-size: 0.62rem; }
+  .judge-workspace.scoring-active .group-card .group-name { font-size: 0.82rem; }
+  .judge-workspace.scoring-active .group-card .check-icon { font-size: 0.9rem; }
+  .judge-workspace.scoring-active .scoring-panel {
     position: sticky;
     top: 12px;
     margin-top: 0;
@@ -595,6 +611,7 @@ function openScoring(groupId) {
   });
 
   document.getElementById('scoring-panel').classList.remove('hidden');
+  document.getElementById('judge-workspace').classList.add('scoring-active');
   startCountdown();
   renderGroupGrid();
 
@@ -676,6 +693,7 @@ function closeScoring() {
   currentGroupId = null;
   stopCountdown();
   document.getElementById('scoring-panel').classList.add('hidden');
+  document.getElementById('judge-workspace').classList.remove('scoring-active');
   renderGroupGrid();
 }
 
