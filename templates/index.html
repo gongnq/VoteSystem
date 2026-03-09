@@ -231,34 +231,11 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   .judge-workspace .group-card .group-name { font-size: 1.15rem; }
   .judge-workspace .group-card .check-icon { font-size: 1.4rem; }
 
-  /* --- Scoring view: side-by-side --- */
-  .judge-workspace.scoring-active {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 16px;
-    align-items: start;
-  }
-  .judge-workspace.scoring-active .group-grid {
-    grid-template-columns: 1fr;
-    gap: 4px;
-    min-height: calc(100vh - 140px);
-  }
-  .judge-workspace.scoring-active .group-card {
-    padding: 8px 10px;
-    gap: 8px;
-    border-radius: var(--radius-sm);
-    justify-content: flex-start;
-  }
-  .judge-workspace.scoring-active .group-card .badge { padding: 2px 6px; font-size: 0.62rem; }
-  .judge-workspace.scoring-active .group-card .group-name { font-size: 0.82rem; }
-  .judge-workspace.scoring-active .group-card .check-icon { font-size: 0.9rem; }
+  /* --- Scoring view: full-width panel, hide group grid --- */
+  .judge-workspace.scoring-active .group-grid { display: none; }
   .judge-workspace.scoring-active .scoring-panel {
-    position: sticky;
-    top: 12px;
-    margin-top: 0;
-    max-height: calc(100vh - 100px);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    max-width: 700px;
+    margin: 0 auto;
   }
 }
 
@@ -545,7 +522,7 @@ function openScoring(groupId) {
     const val = existing ? existing.scores[i] : 3;
     const pct = (val - 2) / 3 * 100;
     const critDescs = descriptions[crit] || {};
-    const desc = critDescs[String(Math.floor(val))] || '';
+    const desc = critDescs[String(val)] || '';
     const div = document.createElement('div');
     div.className = 'slider-group';
     div.innerHTML = `
