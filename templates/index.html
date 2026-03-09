@@ -223,11 +223,13 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   }
   .judge-workspace .group-card {
     flex: 1;
-    padding: 16px 18px;
-    gap: 12px;
+    padding: 20px 24px;
+    gap: 14px;
     justify-content: center;
   }
-  .judge-workspace .group-card .group-name { font-size: 1rem; }
+  .judge-workspace .group-card .badge { padding: 5px 14px; font-size: 0.85rem; }
+  .judge-workspace .group-card .group-name { font-size: 1.15rem; }
+  .judge-workspace .group-card .check-icon { font-size: 1.4rem; }
 
   /* --- Scoring view: side-by-side --- */
   .judge-workspace.scoring-active {
@@ -716,19 +718,7 @@ async function submitVote() {
   if (res.ok) {
     judgeVotes[currentGroupId] = { scores, comment: '' };
     showToast('Score submitted!');
-
-    // Navigate to next unscored group
-    const currentIdx = CONFIG.groups.findIndex(g => g.id === currentGroupId);
-    let nextGroup = null;
-    for (let i = 1; i <= CONFIG.groups.length; i++) {
-      const candidate = CONFIG.groups[(currentIdx + i) % CONFIG.groups.length];
-      if (!judgeVotes[candidate.id]) { nextGroup = candidate; break; }
-    }
-    if (nextGroup) {
-      openScoring(nextGroup.id);
-    } else {
-      closeScoring();
-    }
+    closeScoring();
   } else {
     showToast('Error submitting score');
   }
