@@ -217,19 +217,20 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   /* --- Main view: full-page grid, big cards --- */
   .judge-workspace .group-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+    gap: 16px;
     min-height: calc(100vh - 140px);
     align-content: stretch;
   }
   .judge-workspace .group-card {
     flex: 1;
-    padding: 20px 24px;
-    gap: 14px;
+    padding: 24px 28px;
+    gap: 16px;
     justify-content: center;
+    border-radius: var(--radius);
   }
-  .judge-workspace .group-card .badge { padding: 5px 14px; font-size: 0.85rem; }
-  .judge-workspace .group-card .group-name { font-size: 1.15rem; }
-  .judge-workspace .group-card .check-icon { font-size: 1.4rem; }
+  .judge-workspace .group-card .badge { padding: 6px 16px; font-size: 0.95rem; }
+  .judge-workspace .group-card .group-name { font-size: 1.35rem; }
+  .judge-workspace .group-card .check-icon { font-size: 1.6rem; }
 
   /* --- Scoring view: full-width panel, hide group grid --- */
   .judge-workspace.scoring-active .group-grid { display: none; }
