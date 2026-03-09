@@ -234,8 +234,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   /* --- Scoring view: full-width panel, hide group grid --- */
   .judge-workspace.scoring-active .group-grid { display: none; }
   .judge-workspace.scoring-active .scoring-panel {
-    max-width: 700px;
-    margin: 0 auto;
+    width: 100%;
   }
 }
 
@@ -623,7 +622,7 @@ function setSliderValue(idx, val) {
   const crit = track.dataset.crit;
   const descriptions = CONFIG.criteria_descriptions || {};
   const critDescs = descriptions[crit] || {};
-  const desc = critDescs[String(Math.floor(val))] || '';
+  const desc = critDescs[String(val)] || '';
   group.querySelector('.slider-desc').textContent = desc;
 }
 
