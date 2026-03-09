@@ -262,6 +262,87 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 }
 .countdown-ring.warn .countdown-time { color: var(--warning); }
 .countdown-ring.urgent .countdown-time { color: #e74c3c; }
+
+/* ===== TUTORIAL MODAL ===== */
+.btn-info {
+  width: 32px; height: 32px; border-radius: 50%; border: none;
+  background: var(--surface2); color: var(--text2); font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; line-height: 1;
+}
+.btn-info:hover { background: var(--primary); color: #fff; }
+
+.tutorial-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6);
+  z-index: 1000; display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.tutorial-modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 36px;
+  max-width: 420px; width: 100%; text-align: center;
+}
+.tutorial-modal h3 { font-size: 1.3rem; margin-bottom: 8px; }
+.tutorial-modal p { color: var(--text2); font-size: 0.95rem; margin-bottom: 0; }
+
+.tutorial-anim {
+  height: 120px; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px; position: relative;
+}
+.tutorial-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 28px;
+}
+.tutorial-dots { display: flex; gap: 8px; }
+.tutorial-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--surface2); transition: background .2s;
+}
+.tutorial-dot.active { background: var(--primary); }
+
+/* --- Step 1 anim: card + tap finger --- */
+.anim-card {
+  width: 100px; height: 60px; background: var(--surface2);
+  border: 2px solid var(--border); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; color: var(--text2); font-weight: 600;
+}
+.anim-finger {
+  font-size: 1.8rem; position: absolute; bottom: 8px; right: 100px;
+  animation: tap-bounce 1.2s ease-in-out infinite;
+}
+@keyframes tap-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+/* --- Step 2 anim: slider track + moving dot --- */
+.anim-track {
+  width: 180px; height: 6px; background: var(--surface2);
+  border-radius: 3px; position: relative;
+}
+.anim-dot {
+  width: 22px; height: 22px; background: var(--primary);
+  border: 3px solid #fff; border-radius: 50%;
+  position: absolute; top: 50%; transform: translateY(-50%);
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  animation: slide-move 2s ease-in-out infinite;
+}
+@keyframes slide-move {
+  0%, 100% { left: 0; }
+  50% { left: calc(100% - 22px); }
+}
+
+/* --- Step 3 anim: pulsing submit button --- */
+.anim-btn {
+  padding: 12px 28px; background: var(--success); color: #fff;
+  border: none; border-radius: var(--radius-sm); font-weight: 600;
+  font-size: 0.95rem; animation: pulse-glow 1.6s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,184,148,.4); transform: scale(1); }
+  50% { box-shadow: 0 0 20px 8px rgba(0,184,148,.3); transform: scale(1.05); }
+}
 </style>
 </head>
 <body>
@@ -290,6 +371,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
     <h1>2026 Asia Demo Crawl</h1>
     <div class="header-actions">
       <span id="judge-label" style="color:var(--text2); font-size:0.9rem;"></span>
+      <button class="btn-info" id="btn-info" onclick="showTutorial()" title="How to use">&#8505;</button>
       <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
     </div>
   </div>
@@ -327,6 +409,42 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
       <div class="submit-row">
         <button class="btn btn-success" onclick="submitVote()">Submit Score</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TUTORIAL OVERLAY ===== -->
+<div class="tutorial-overlay hidden" id="tutorial-overlay" onclick="if(event.target===this)closeTutorial()">
+  <div class="tutorial-modal">
+    <div class="tutorial-step" data-step="0">
+      <div class="tutorial-anim">
+        <div class="anim-card">Group 1</div>
+        <div class="anim-finger">&#9757;</div>
+      </div>
+      <h3>Select a Project</h3>
+      <p>Tap any project card to begin scoring</p>
+    </div>
+    <div class="tutorial-step hidden" data-step="1">
+      <div class="tutorial-anim">
+        <div class="anim-track"><div class="anim-dot"></div></div>
+      </div>
+      <h3>Slide to Score</h3>
+      <p>Drag the slider for each criterion (Fair &rarr; Excellent)</p>
+    </div>
+    <div class="tutorial-step hidden" data-step="2">
+      <div class="tutorial-anim">
+        <div class="anim-btn">Submit Score</div>
+      </div>
+      <h3>Submit Your Score</h3>
+      <p>Tap Submit Score when you're done</p>
+    </div>
+    <div class="tutorial-nav">
+      <div class="tutorial-dots">
+        <div class="tutorial-dot active"></div>
+        <div class="tutorial-dot"></div>
+        <div class="tutorial-dot"></div>
+      </div>
+      <button class="btn btn-primary" id="tutorial-next" onclick="tutorialNext()">Next</button>
     </div>
   </div>
 </div>
@@ -465,6 +583,11 @@ async function loginAsJudge() {
   renderGroupGrid();
   closeScoring();
   showView('view-judge');
+
+  // Show tutorial on first login
+  if (!localStorage.getItem('tutorial_seen')) {
+    showTutorial();
+  }
 }
 
 function sendHeartbeat() {
@@ -803,6 +926,40 @@ function showToast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ===== TUTORIAL =====
+let tutorialStep = 0;
+
+function showTutorial() {
+  tutorialStep = 0;
+  const overlay = document.getElementById('tutorial-overlay');
+  overlay.classList.remove('hidden');
+  updateTutorialStep();
+}
+
+function tutorialNext() {
+  tutorialStep++;
+  if (tutorialStep >= 3) {
+    closeTutorial();
+    return;
+  }
+  updateTutorialStep();
+}
+
+function updateTutorialStep() {
+  const steps = document.querySelectorAll('.tutorial-step');
+  const dots = document.querySelectorAll('.tutorial-dot');
+  const nextBtn = document.getElementById('tutorial-next');
+
+  steps.forEach((s, i) => s.classList.toggle('hidden', i !== tutorialStep));
+  dots.forEach((d, i) => d.classList.toggle('active', i === tutorialStep));
+  nextBtn.textContent = tutorialStep === 2 ? 'Got it!' : 'Next';
+}
+
+function closeTutorial() {
+  document.getElementById('tutorial-overlay').classList.add('hidden');
+  localStorage.setItem('tutorial_seen', '1');
 }
 
 // ===== TABLET ORIENTATION =====
