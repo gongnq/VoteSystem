@@ -60,16 +60,16 @@ GROUPS = (
 # CRITERIA per category — the 3 slider labels shown in the UI
 # ---------------------------------------------------------------------------
 CRITERIA_BY_CATEGORY = {
-    "NPI": ["Innovation/Originality", "Customer Delight", "Market Opportunity"],
-    "NTI": ["Innovation/Originality", "Customer Delight", "Feasibility/Practicality"],
-    "AI":  ["Innovation/Originality", "Customer Delight", "AI Practicality"],
+    "NPI": ["Innovation & Originality", "Customer Delight", "Market Opportunity"],
+    "NTI": ["Innovation & Originality", "Customer Delight", "Feasibility & Practicality"],
+    "AI":  ["Innovation & Originality", "Customer Delight", "AI Practicality"],
 }
 
 # ---------------------------------------------------------------------------
 # CRITERIA DESCRIPTIONS — concise hints shown on the slider per score level
 # ---------------------------------------------------------------------------
 CRITERIA_DESCRIPTIONS = {
-    "Innovation/Originality": {
+    "Innovation & Originality": {
         2:   "Limited; mostly derivative",
         2.5: "Somewhat derivative; minor novelty",
         3:   "Moderate; incremental improvement",
@@ -87,7 +87,7 @@ CRITERIA_DESCRIPTIONS = {
         4.5: "Strong impact; approaching transformative",
         5:   "Critical pain points; transformative",
     },
-    "Feasibility/Practicality": {
+    "Feasibility & Practicality": {
         2:   "Challenging; high uncertainty",
         2.5: "Difficult but possible; major hurdles",
         3:   "Achievable; some uncertainties",
