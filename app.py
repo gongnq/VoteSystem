@@ -1,29 +1,10 @@
 # ============================================================================
 # CONFIGURATION GUIDE
 # ============================================================================
-# To customize this voting system, edit the following sections:
-#
-# 1. JUDGE NAMES (line ~35):
-#    Change the JUDGES list to your actual judge names.
-#    Example: JUDGES = ["Alice", "Bob", "Charlie"]
-#
-# 2. GROUP NAMES (line ~40):
-#    Change the GROUPS list. Each entry is (group_id, display_name, category).
-#    Categories must be one of: "NPI", "NTI", "AI"
-#    Example: ("NPI-1", "Team Alpha", "NPI")
-#
-# 3. ADMIN PIN (line ~70):
-#    Set via ADMIN_PIN environment variable, or defaults to "2025".
-#    On Render, set it in the envVars section of render.yaml.
-#
-# 4. CRITERIA LABELS (line ~55):
-#    The third criterion label changes by category:
-#    - NPI/NTI groups see "Feasibility/Practicality"
-#    - AI groups see "AI Practicality"
-#    Modify CRITERIA_BY_CATEGORY to change labels.
-#
-# 5. AWARDS (line ~60):
-#    Modify AWARDS to change award names, eligible categories, and weights.
+# 1. JUDGE NAMES (line ~30): Change the JUDGES list.
+# 2. GROUP NAMES (line ~35): Each entry is (group_id, display_name, category).
+# 3. VOTE OPTIONS (line ~50): Words shown per category. Judge picks one.
+# 4. ADMIN PIN (line ~60): Set via ADMIN_PIN env var, defaults to "2026".
 # ============================================================================
 
 import os
@@ -35,7 +16,7 @@ from flask import Flask, request, jsonify, render_template, g, Response
 app = Flask(__name__)
 
 # ---------------------------------------------------------------------------
-# JUDGES — edit this list to use real names
+# JUDGES
 # ---------------------------------------------------------------------------
 JUDGES = ["Rob", "Regien", "Adam", "Amit", "Alok", "Prasad", "Volker", "Toby", "Chien"]
 
@@ -57,100 +38,20 @@ GROUPS = (
 )
 
 # ---------------------------------------------------------------------------
-# CRITERIA per category — the 3 slider labels shown in the UI
+# VOTE OPTIONS per category — judge picks exactly one per group
 # ---------------------------------------------------------------------------
-CRITERIA_BY_CATEGORY = {
-    "NPI": ["Innovation & Originality", "Customer Delight", "Market Opportunity"],
-    "NTI": ["Innovation & Originality", "Customer Delight", "Feasibility & Practicality"],
-    "AI":  ["Innovation & Originality", "Customer Delight", "AI Practicality"],
+VOTE_OPTIONS_BY_CATEGORY = {
+    "NPI": ["PRFAQ", "PRE-ORDER", "Explore"],
+    "NTI": ["HIGH Risk/High Reward", "Competitive Edge", "No"],
+    "AI":  ["PRFAQ", "PRE-ORDER", "Explore"],
 }
-
-# ---------------------------------------------------------------------------
-# CRITERIA DESCRIPTIONS — concise hints shown on the slider per score level
-# ---------------------------------------------------------------------------
-CRITERIA_DESCRIPTIONS = {
-    "Innovation & Originality": {
-        2:   "Limited; mostly derivative",
-        2.5: "Somewhat derivative; minor novelty",
-        3:   "Moderate; incremental improvement",
-        3.5: "Noticeable creativity; beyond incremental",
-        4:   "Significant; creative approach",
-        4.5: "Highly creative; near-breakthrough",
-        5:   "Breakthrough; paradigm-shifting",
-    },
-    "Customer Delight": {
-        2:   "Minor needs; limited impact",
-        2.5: "Some relevance; slight improvement",
-        3:   "Basic needs; moderate improvement",
-        3.5: "Meaningful needs; above-average value",
-        4:   "Important needs; meaningful value",
-        4.5: "Strong impact; approaching transformative",
-        5:   "Critical pain points; transformative",
-    },
-    "Feasibility & Practicality": {
-        2:   "Challenging; high uncertainty",
-        2.5: "Difficult but possible; major hurdles",
-        3:   "Achievable; some uncertainties",
-        3.5: "Reasonable path; minor hurdles",
-        4:   "Feasible; manageable challenges",
-        4.5: "Very feasible; minimal risk",
-        5:   "Highly feasible; clear path",
-    },
-    "Market Opportunity": {
-        2:   "Small/saturated; unclear growth",
-        2.5: "Limited market; some potential",
-        3:   "Steady growth; niche appeal",
-        3.5: "Growing demand; expanding niche",
-        4:   "Strong demand; good potential",
-        4.5: "High demand; significant opportunity",
-        5:   "New category; exceptional potential",
-    },
-    "AI Practicality": {
-        2:   "Challenging; high uncertainty",
-        2.5: "Difficult but possible; major hurdles",
-        3:   "Achievable; some uncertainties",
-        3.5: "Reasonable path; minor hurdles",
-        4:   "Feasible; manageable challenges",
-        4.5: "Very feasible; minimal risk",
-        5:   "Highly feasible; clear path",
-    },
-}
-
-# ---------------------------------------------------------------------------
-# AWARDS — name, eligible_categories (None = all), criteria indices & weights
-# Criteria indices map to the 3 stored score columns (c1–c3) in order.
-# ---------------------------------------------------------------------------
-AWARDS = [
-    {
-        "name": "Product Breakthrough Award",
-        "categories": ["NPI"],
-        "weights": {0: 1, 1: 1, 2: 1},
-    },
-    {
-        "name": "Technology Frontier Award",
-        "categories": ["NTI"],
-        "weights": {0: 1, 1: 1, 2: 1},
-    },
-    {
-        "name": "Customer Delight Award",
-        "categories": None,  # all groups
-        "weights": {1: 1},   # only Customer Delight (index 1)
-    },
-    {
-        "name": "AI Excellence Award",
-        "categories": ["AI"],
-        "weights": {0: 1, 1: 1, 2: 1},
-    },
-]
 
 # ---------------------------------------------------------------------------
 # ADMIN PIN
 # ---------------------------------------------------------------------------
 ADMIN_PIN = os.environ.get("ADMIN_PIN", "2026")
 
-# Session lock timeout in seconds — if no heartbeat within this period, lock expires
 SESSION_TIMEOUT = 300
-
 DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "votes.db")
 
 
@@ -175,15 +76,22 @@ def close_db(exception):
 
 def init_db():
     db = sqlite3.connect(DATABASE)
+
+    # Migrate from old schema (c1/c2/c3) to new (vote_choice) if needed
+    cursor = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='votes'"
+    )
+    if cursor.fetchone():
+        cols = [row[1] for row in db.execute("PRAGMA table_info(votes)").fetchall()]
+        if "vote_choice" not in cols:
+            db.execute("DROP TABLE votes")
+
     db.execute("""
         CREATE TABLE IF NOT EXISTS votes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             judge TEXT NOT NULL,
             group_id TEXT NOT NULL,
-            c1 REAL NOT NULL CHECK(c1 BETWEEN 2 AND 5),
-            c2 REAL NOT NULL CHECK(c2 BETWEEN 2 AND 5),
-            c3 REAL NOT NULL CHECK(c3 BETWEEN 2 AND 5),
-            comment TEXT DEFAULT '',
+            vote_choice TEXT NOT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(judge, group_id)
         )
@@ -237,7 +145,6 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
 @app.route("/icon-192.png")
 @app.route("/icon-512.png")
 def pwa_icon():
-    """Generate a simple SVG-based PNG placeholder icon."""
     size = 512 if "512" in request.path else 192
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}">
       <rect width="{size}" height="{size}" rx="40" fill="#6c5ce7"/>
@@ -254,26 +161,16 @@ def api_config():
     group_list = []
     for gid, name, cat in GROUPS:
         group_list.append({
-            "id": gid, "name": name, "category": cat,
-            "criteria": CRITERIA_BY_CATEGORY[cat],
+            "id": gid,
+            "name": name,
+            "category": cat,
+            "vote_options": VOTE_OPTIONS_BY_CATEGORY[cat],
         })
-    return jsonify({
-        "judges": JUDGES,
-        "groups": group_list,
-        "awards": [{"name": a["name"],
-                     "categories": a["categories"],
-                     "weights": {str(k): v for k, v in a["weights"].items()}}
-                    for a in AWARDS],
-        "criteria_descriptions": {
-            crit: {str(k): v for k, v in descs.items()}
-            for crit, descs in CRITERIA_DESCRIPTIONS.items()
-        },
-    })
+    return jsonify({"judges": JUDGES, "groups": group_list})
 
 
 @app.route("/api/judge/lock", methods=["POST"])
 def api_judge_lock():
-    """Attempt to lock a judge name for this session."""
     data = request.get_json(force=True)
     judge = data.get("judge", "").strip()
     session_id = data.get("session_id", "").strip()
@@ -305,7 +202,6 @@ def api_judge_lock():
 
 @app.route("/api/judge/heartbeat", methods=["POST"])
 def api_judge_heartbeat():
-    """Keep the judge session alive."""
     data = request.get_json(force=True)
     judge = data.get("judge", "").strip()
     session_id = data.get("session_id", "").strip()
@@ -327,7 +223,6 @@ def api_judge_heartbeat():
 
 @app.route("/api/judge/unlock", methods=["POST"])
 def api_judge_unlock():
-    """Release the judge lock on logout."""
     data = request.get_json(force=True)
     judge = data.get("judge", "").strip()
     session_id = data.get("session_id", "").strip()
@@ -343,7 +238,6 @@ def api_judge_unlock():
 
 @app.route("/api/judge/locked")
 def api_judge_locked():
-    """Return list of currently locked judge names."""
     db = get_db()
     now = time.time()
     rows = db.execute(
@@ -358,31 +252,30 @@ def api_vote():
     data = request.get_json(force=True)
     judge = data.get("judge", "").strip()
     group_id = data.get("group_id", "").strip()
-    scores = data.get("scores", [])
-    comment = data.get("comment", "").strip()
+    vote_choice = data.get("vote_choice", "").strip()
 
     if judge not in JUDGES:
         return jsonify({"error": "Invalid judge"}), 400
 
-    valid_ids = {g[0] for g in GROUPS}
-    if group_id not in valid_ids:
+    group_info = None
+    for gid, name, cat in GROUPS:
+        if gid == group_id:
+            group_info = (gid, name, cat)
+            break
+    if not group_info:
         return jsonify({"error": "Invalid group"}), 400
 
-    if not isinstance(scores, list) or len(scores) != 3:
-        return jsonify({"error": "Scores must be a list of 3 numbers"}), 400
-    for s in scores:
-        if not isinstance(s, (int, float)) or s < 2 or s > 5 or (s * 2) != int(s * 2):
-            return jsonify({"error": "Each score must be 2-5 in 0.5 steps"}), 400
+    valid_options = VOTE_OPTIONS_BY_CATEGORY[group_info[2]]
+    if vote_choice not in valid_options:
+        return jsonify({"error": "Invalid vote choice"}), 400
 
     db = get_db()
     db.execute("""
-        INSERT INTO votes (judge, group_id, c1, c2, c3, comment, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO votes (judge, group_id, vote_choice, updated_at)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(judge, group_id)
-        DO UPDATE SET c1=excluded.c1, c2=excluded.c2, c3=excluded.c3,
-                      comment=excluded.comment,
-                      updated_at=CURRENT_TIMESTAMP
-    """, (judge, group_id, scores[0], scores[1], scores[2], comment))
+        DO UPDATE SET vote_choice=excluded.vote_choice, updated_at=CURRENT_TIMESTAMP
+    """, (judge, group_id, vote_choice))
     db.commit()
     return jsonify({"ok": True})
 
@@ -393,60 +286,56 @@ def api_judge_votes(judge):
         return jsonify({"error": "Invalid judge"}), 400
     db = get_db()
     rows = db.execute(
-        "SELECT group_id, c1, c2, c3, comment FROM votes WHERE judge = ?",
+        "SELECT group_id, vote_choice FROM votes WHERE judge = ?",
         (judge,),
     ).fetchall()
     votes = {}
     for r in rows:
-        votes[r["group_id"]] = {
-            "scores": [r["c1"], r["c2"], r["c3"]],
-            "comment": r["comment"],
-        }
+        votes[r["group_id"]] = {"vote_choice": r["vote_choice"]}
     return jsonify(votes)
 
 
 @app.route("/api/results")
 def api_results():
     db = get_db()
-    rows = db.execute("SELECT group_id, c1, c2, c3 FROM votes").fetchall()
+    rows = db.execute(
+        "SELECT group_id, vote_choice, COUNT(*) as cnt "
+        "FROM votes GROUP BY group_id, vote_choice"
+    ).fetchall()
 
-    group_scores = {}
+    tallies = {}
     for r in rows:
         gid = r["group_id"]
-        if gid not in group_scores:
-            group_scores[gid] = {"scores": [[], [], []], "count": 0}
-        group_scores[gid]["scores"][0].append(r["c1"])
-        group_scores[gid]["scores"][1].append(r["c2"])
-        group_scores[gid]["scores"][2].append(r["c3"])
-        group_scores[gid]["count"] += 1
+        if gid not in tallies:
+            tallies[gid] = {}
+        tallies[gid][r["vote_choice"]] = r["cnt"]
 
-    awards_result = []
-    for award in AWARDS:
-        eligible = []
-        for gid, name, cat in GROUPS:
-            if award["categories"] is not None and cat not in award["categories"]:
-                continue
-            if gid not in group_scores:
-                eligible.append({
-                    "group_id": gid, "name": name, "category": cat,
-                    "avg_score": 0, "judge_count": 0,
-                })
-                continue
-            gs = group_scores[gid]
-            total_weight = sum(award["weights"].values())
-            weighted_sum = 0
-            for idx, w in award["weights"].items():
-                criterion_scores = gs["scores"][idx]
-                if criterion_scores:
-                    weighted_sum += w * (sum(criterion_scores) / len(criterion_scores))
-            avg = weighted_sum / total_weight if total_weight > 0 else 0
-            eligible.append({
-                "group_id": gid, "name": name, "category": cat,
-                "avg_score": round(avg, 2), "judge_count": gs["count"],
-            })
-        eligible.sort(key=lambda x: x["avg_score"], reverse=True)
-        awards_result.append({"award": award["name"], "groups": eligible})
-    return jsonify(awards_result)
+    results = []
+    categories_order = []
+    cat_groups = {}
+    for gid, name, cat in GROUPS:
+        if cat not in cat_groups:
+            cat_groups[cat] = []
+            categories_order.append(cat)
+        vote_counts = tallies.get(gid, {})
+        total_votes = sum(vote_counts.values())
+        cat_groups[cat].append({
+            "group_id": gid,
+            "name": name,
+            "category": cat,
+            "votes": vote_counts,
+            "total_votes": total_votes,
+        })
+
+    for cat in categories_order:
+        groups = sorted(cat_groups[cat], key=lambda x: x["total_votes"], reverse=True)
+        results.append({
+            "category": cat,
+            "vote_options": VOTE_OPTIONS_BY_CATEGORY[cat],
+            "groups": groups,
+        })
+
+    return jsonify(results)
 
 
 @app.route("/api/progress")

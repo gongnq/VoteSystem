@@ -10,6 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Demo Crawl">
 <link rel="apple-touch-icon" href="/icon-192.png">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 /* ===== RESET & BASE ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -17,6 +19,7 @@
   --bg: #0f1117; --surface: #1a1d27; --surface2: #242836;
   --border: #2e3348; --text: #e4e6f0; --text2: #8b8fa8;
   --primary: #6c5ce7; --success: #00b894; --warning: #fdcb6e;
+  --danger: #e74c3c;
   --npi: #0984e3; --nti: #e17055; --ai: #a29bfe;
   --npi-bg: rgba(9,132,227,.12); --nti-bg: rgba(225,112,85,.12); --ai-bg: rgba(162,155,254,.12);
   --radius: 12px; --radius-sm: 8px;
@@ -46,6 +49,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
 .btn-success { background: var(--success); color: #fff; }
 .btn-success:hover { background: #00a383; }
+.btn-danger { background: var(--danger); color: #fff; }
 
 /* ===== LOGIN ===== */
 .login-card { max-width: 540px; margin: 60px auto; background: var(--surface);
@@ -65,7 +69,24 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success));
   border-radius: 4px; transition: width .3s ease; }
 
+/* ===== SCAN BUTTON ===== */
+.scan-section { text-align: center; margin-bottom: 28px; }
+.btn-scan { padding: 18px 36px; font-size: 1.2rem; border: none; border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--primary), #a29bfe); color: #fff;
+  font-weight: 700; display: inline-flex; align-items: center; gap: 12px;
+  box-shadow: 0 4px 20px rgba(108,92,231,.35); transition: all .2s; }
+.btn-scan:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(108,92,231,.45); }
+.btn-scan svg { width: 28px; height: 28px; }
+.scan-hint { color: var(--text2); font-size: 0.85rem; margin-top: 10px; }
+
+/* ===== QR READER ===== */
+.qr-reader-wrap { max-width: 400px; margin: 0 auto 24px; position: relative; }
+#qr-reader { width: 100%; border-radius: var(--radius); overflow: hidden; }
+#qr-reader video { border-radius: var(--radius); }
+
 /* ===== GROUP LIST ===== */
+.section-title { font-size: 0.85rem; color: var(--text2); text-transform: uppercase;
+  letter-spacing: .5px; margin-bottom: 12px; font-weight: 600; }
 .group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .group-card { background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 16px; cursor: pointer;
@@ -85,41 +106,25 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .group-name { font-weight: 600; font-size: 0.95rem; }
 .check-icon { font-size: 1.2rem; color: var(--success); }
 
-/* ===== SCORING PANEL ===== */
-.scoring-panel { background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 28px; margin-top: 24px; }
-.scoring-header { display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 24px; }
-.scoring-header h3 { font-size: 1.2rem; }
+/* ===== VOTING PANEL ===== */
+.voting-panel { background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 32px; margin-top: 24px; text-align: center; }
+.voting-header { display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 28px; text-align: left; }
+.voting-header h3 { font-size: 1.3rem; }
+.voting-prompt { color: var(--text2); font-size: 1rem; margin-bottom: 24px; }
+.vote-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-bottom: 32px; }
+.vote-option-btn { padding: 20px 32px; border: 2px solid var(--border); border-radius: var(--radius);
+  background: var(--surface2); color: var(--text); font-size: 1.1rem; font-weight: 700;
+  transition: all .2s; min-width: 160px; text-align: center; }
+.vote-option-btn:hover { border-color: var(--primary); background: rgba(108,92,231,.1); }
+.vote-option-btn.selected { border-color: var(--primary); background: var(--primary); color: #fff;
+  box-shadow: 0 4px 16px rgba(108,92,231,.4); transform: scale(1.05); }
+.vote-option-btn.voted { border-color: var(--success); background: var(--success); color: #fff; }
+.submit-row { display: flex; justify-content: center; gap: 12px; }
+.submit-row .btn { padding: 14px 36px; font-size: 1.05rem; }
 
-/* ===== SLIDER ===== */
-.slider-group { margin-bottom: 28px; }
-.slider-label { font-weight: 600; margin-bottom: 10px; font-size: 0.92rem; }
-.slider-wrap { position: relative; padding: 0 8px; }
-.slider-track { position: relative; height: 6px; background: var(--surface2);
-  border-radius: 3px; margin: 20px 0 12px; }
-.slider-fill { position: absolute; left: 0; top: 0; height: 100%;
-  background: var(--primary); border-radius: 3px; transition: width .15s; }
-.slider-thumb { position: absolute; top: 50%; width: 28px; height: 28px;
-  background: var(--primary); border: 3px solid #fff; border-radius: 50%;
-  transform: translate(-50%, -50%); cursor: grab; z-index: 2;
-  transition: transform .1s; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
-.slider-thumb:active { transform: translate(-50%, -50%) scale(1.15); cursor: grabbing; }
-.slider-ticks { display: flex; justify-content: space-between; }
-.slider-tick { display: flex; flex-direction: column; align-items: center; gap: 4px;
-  cursor: pointer; padding: 4px 0; width: 0; overflow: visible; }
-.slider-tick-dot { width: 10px; height: 10px; background: var(--surface2);
-  border-radius: 50%; transition: background .15s; }
-.slider-tick-dot.half { width: 7px; height: 7px; }
-.slider-tick-dot.active { background: var(--primary); }
-.slider-tick-label { font-size: 0.68rem; color: var(--text2); text-align: center; white-space: nowrap; }
-.slider-value { text-align: center; font-size: 0.85rem; font-weight: 600;
-  color: var(--primary); margin-top: 4px; }
-.slider-desc { text-align: center; font-size: 0.75rem; color: var(--text2);
-  margin-top: 2px; min-height: 1.1em; transition: opacity .2s; }
-
-/* ===== SUBMIT ===== */
-.submit-row { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+/* ===== TOAST ===== */
 .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
   background: var(--success); color: #fff; padding: 12px 28px; border-radius: var(--radius-sm);
   font-weight: 600; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
@@ -144,22 +149,21 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .tab:hover { color: var(--text); }
 .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-/* ===== LEADERBOARD ===== */
-.leaderboard { margin-bottom: 32px; }
-.lb-table { width: 100%; border-collapse: collapse; }
-.lb-table th { text-align: left; padding: 10px 14px; font-size: 0.8rem;
+/* ===== RESULTS TABLE ===== */
+.results-section { margin-bottom: 32px; }
+.results-table { width: 100%; border-collapse: collapse; }
+.results-table th { text-align: left; padding: 10px 14px; font-size: 0.8rem;
   color: var(--text2); text-transform: uppercase; letter-spacing: .5px;
   border-bottom: 1px solid var(--border); }
-.lb-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
-.lb-table tr:hover td { background: var(--surface2); }
-.lb-table .rank { font-weight: 700; color: var(--text2); width: 50px; }
-.lb-table .winner td { background: rgba(253,203,110,.08); }
-.lb-table .winner .rank { color: var(--warning); }
-.score-bar-wrap { display: flex; align-items: center; gap: 10px; }
-.score-bar { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; }
-.score-bar-inner { height: 100%; border-radius: 4px; transition: width .5s; }
-.score-val { font-weight: 700; min-width: 40px; }
-.judge-count { color: var(--text2); font-size: 0.82rem; }
+.results-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+.results-table tr:hover td { background: var(--surface2); }
+.results-table .rank { font-weight: 700; color: var(--text2); width: 50px; }
+.results-table .winner td { background: rgba(253,203,110,.08); }
+.results-table .winner .rank { color: var(--warning); }
+.vote-tally { display: flex; gap: 8px; flex-wrap: wrap; }
+.tally-chip { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+  background: var(--surface2); color: var(--text2); }
+.tally-chip.has-votes { background: rgba(108,92,231,.15); color: var(--primary); }
 
 /* ===== JUDGE GRID ===== */
 .judge-grid-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; margin-top: 32px; }
@@ -175,8 +179,13 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .judge-cell.complete { border-color: var(--success); }
 .judge-cell.complete .judge-cell-fill { background: var(--success); }
 
-/* ===== JUDGE WORKSPACE (tablet landscape layout) ===== */
-.judge-workspace { display: block; }
+/* ===== QR CODES (admin print) ===== */
+.qr-print-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+.qr-print-card { background: #fff; border-radius: var(--radius); padding: 24px;
+  text-align: center; color: #000; }
+.qr-print-card h4 { font-size: 0.9rem; margin-bottom: 4px; color: #333; }
+.qr-print-card .qr-cat { font-size: 0.75rem; color: #888; margin-bottom: 12px; }
+.qr-print-card canvas, .qr-print-card img { margin: 0 auto; display: block; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
@@ -185,170 +194,39 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   .tabs { gap: 0; }
   .tab { padding: 10px 12px; font-size: 0.8rem; }
   .header h1 { font-size: 1.1rem; }
+  .vote-options { flex-direction: column; align-items: stretch; }
+  .vote-option-btn { min-width: auto; }
 }
 
-/* ===== TABLET: larger touch targets ===== */
 @media (min-width: 768px) {
-  .slider-thumb { width: 36px; height: 36px; }
-  .slider-tick-dot { width: 14px; height: 14px; }
-  .slider-tick-dot.half { width: 10px; height: 10px; }
-  .slider-tick { padding: 8px 0; }
-  .slider-tick-label { font-size: 0.78rem; }
   .btn { padding: 14px 24px; font-size: 1rem; }
   .btn-sm { padding: 10px 18px; font-size: 0.9rem; }
   .group-card { padding: 20px; gap: 16px; }
   .group-name { font-size: 1.3rem; }
   .badge { padding: 4px 12px; font-size: 0.78rem; }
-  .scoring-panel { padding: 32px; }
-  .slider-label { font-size: 1.2rem; }
-  .slider-value { font-size: 1.25rem; }
-  .slider-desc { font-size: 1.05rem; }
+  .vote-option-btn { padding: 24px 40px; font-size: 1.25rem; }
 }
 
-/* ===== TABLET PORTRAIT: 2-column grid ===== */
 @media (min-width: 768px) and (orientation: portrait) {
   .group-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
 }
 
-/* ===== TABLET LANDSCAPE ===== */
 @media (min-width: 768px) and (orientation: landscape) {
   .container { max-width: 100%; padding: 12px 24px; }
   .header { padding: 8px 0; margin-bottom: 12px; }
-  .progress-wrap { margin-bottom: 12px; }
-
-  /* --- Main view: full-page grid, big cards --- */
   .judge-workspace .group-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    min-height: calc(100vh - 140px);
-    align-content: stretch;
+    grid-template-columns: repeat(4, 1fr); gap: 16px;
   }
-  .judge-workspace .group-card {
-    flex: 1;
-    padding: 24px 28px;
-    gap: 16px;
-    justify-content: center;
-    border-radius: var(--radius);
-  }
-  .judge-workspace .group-card .badge { padding: 6px 16px; font-size: 0.95rem; }
-  .judge-workspace .group-card .group-name { font-size: 1.8rem; }
-  .judge-workspace .group-card .check-icon { font-size: 1.6rem; }
-
-  /* --- Scoring view: full-width panel, hide group grid --- */
-  .judge-workspace.scoring-active .group-grid { display: none; }
-  .judge-workspace.scoring-active .scoring-panel {
-    width: 100%;
-  }
+  .judge-workspace .group-card .group-name { font-size: 1.5rem; }
+  .judge-workspace.voting-active .group-grid { display: none; }
+  .judge-workspace.voting-active .scan-section { display: none; }
 }
 
-/* ===== COUNTDOWN TIMER ===== */
-.countdown-ring {
-  position: relative; width: 40px; height: 40px; flex-shrink: 0;
-}
-.countdown-ring svg { transform: rotate(-90deg); }
-.countdown-ring circle {
-  fill: none; stroke-width: 3; cx: 20; cy: 20; r: 17;
-}
-.countdown-ring .ring-bg { stroke: var(--surface2); }
-.countdown-ring .ring-fg {
-  stroke: var(--text2); stroke-linecap: round;
-  transition: stroke-dashoffset 1s linear, stroke .3s;
-}
-.countdown-ring.warn .ring-fg { stroke: var(--warning); }
-.countdown-ring.urgent .ring-fg { stroke: #e74c3c; }
-.countdown-time {
-  position: absolute; inset: 0; display: flex; align-items: center;
-  justify-content: center; font-size: 0.58rem; font-weight: 600; color: var(--text2);
-}
-.countdown-ring.warn .countdown-time { color: var(--warning); }
-.countdown-ring.urgent .countdown-time { color: #e74c3c; }
-
-/* ===== TUTORIAL MODAL ===== */
-.btn-info {
-  width: 32px; height: 32px; border-radius: 50%; border: none;
-  background: var(--surface2); color: var(--text2); font-size: 1rem;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .15s; line-height: 1;
-}
-.btn-info:hover { background: var(--primary); color: #fff; }
-
-.tutorial-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.6);
-  z-index: 1000; display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-}
-.tutorial-modal {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 36px;
-  max-width: 420px; width: 100%; text-align: center;
-}
-.tutorial-modal h3 { font-size: 1.3rem; margin-bottom: 8px; }
-.tutorial-modal p { color: var(--text2); font-size: 0.95rem; margin-bottom: 0; }
-
-.tutorial-anim {
-  height: 120px; display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px; position: relative;
-}
-.tutorial-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 28px;
-}
-.tutorial-dots { display: flex; gap: 8px; }
-.tutorial-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--surface2); transition: background .2s;
-}
-.tutorial-dot.active { background: var(--primary); }
-
-/* --- Step 1 anim: two cards + tap finger --- */
-.anim-cards { display: flex; gap: 10px; }
-.anim-card {
-  width: 90px; height: 56px; background: var(--surface2);
-  border: 2px solid var(--border); border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.72rem; color: var(--text2); font-weight: 600;
-}
-.anim-card.tapped { border-color: var(--primary); background: rgba(108,92,231,.1); }
-.anim-finger {
-  font-size: 1.8rem; position: absolute; bottom: 4px; left: calc(50% - 58px);
-  animation: tap-bounce 1.2s ease-in-out infinite;
-}
-@keyframes tap-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14px); }
-}
-
-/* --- Step 2 anim: slider track + labels + moving dot --- */
-.anim-slider-wrap { display: flex; flex-direction: column; align-items: center; width: 220px; }
-.anim-track {
-  width: 100%; height: 6px; background: var(--surface2);
-  border-radius: 3px; position: relative;
-}
-.anim-labels {
-  display: flex; justify-content: space-between; width: 100%; margin-top: 8px;
-  font-size: 0.72rem; color: var(--text2); font-weight: 600;
-}
-.anim-dot {
-  width: 22px; height: 22px; background: var(--primary);
-  border: 3px solid #fff; border-radius: 50%;
-  position: absolute; top: 50%; transform: translateY(-50%);
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
-  animation: slide-move 2s ease-in-out infinite;
-}
-@keyframes slide-move {
-  0%, 100% { left: 0; }
-  50% { left: calc(100% - 22px); }
-}
-
-/* --- Step 3 anim: pulsing submit button --- */
-.anim-btn {
-  padding: 12px 28px; background: var(--success); color: #fff;
-  border: none; border-radius: var(--radius-sm); font-weight: 600;
-  font-size: 0.95rem; animation: pulse-glow 1.6s ease-in-out infinite;
-}
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0,184,148,.4); transform: scale(1); }
-  50% { box-shadow: 0 0 20px 8px rgba(0,184,148,.3); transform: scale(1.05); }
+@media print {
+  body { background: #fff; color: #000; }
+  .header, .tabs, .judge-grid-title, .judge-grid, .results-section { display: none; }
+  .qr-print-grid { display: grid !important; }
+  .qr-print-card { border: 1px solid #ccc; break-inside: avoid; }
 }
 </style>
 </head>
@@ -363,7 +241,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
     <h2>2026 Asia Demo Crawl</h2>
     <p>Select your name to begin scoring</p>
     <select id="judge-select">
-      <option value="">— Choose your name —</option>
+      <option value="">-- Choose your name --</option>
     </select>
     <button class="btn btn-primary" onclick="loginAsJudge()">Start Voting</button>
     <div style="text-align:center; margin-top: 20px;">
@@ -378,86 +256,57 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
     <h1>2026 Asia Demo Crawl</h1>
     <div class="header-actions">
       <span id="judge-label" style="color:var(--text2); font-size:0.9rem;"></span>
-      <button class="btn-info" id="btn-info" onclick="showTutorial()" title="How to use">&#8505;</button>
       <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
     </div>
   </div>
 
   <div class="progress-wrap">
     <div class="progress-label">
-      <span>Scoring Progress</span>
-      <span id="progress-text">0 / 18</span>
+      <span>Voting Progress</span>
+      <span id="progress-text">0 / 11</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
   </div>
 
   <div class="judge-workspace" id="judge-workspace">
+    <!-- Scan Button -->
+    <div class="scan-section" id="scan-section">
+      <button class="btn-scan" id="btn-scan" onclick="toggleScanner()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/>
+          <rect x="7" y="7" width="10" height="10" rx="1"/>
+        </svg>
+        Scan QR Code
+      </button>
+      <div class="scan-hint">Scan the QR code at a booth to vote</div>
+    </div>
+
+    <!-- QR Reader (hidden until scan tapped) -->
+    <div class="qr-reader-wrap hidden" id="qr-reader-wrap">
+      <div id="qr-reader"></div>
+      <div style="text-align:center; margin-top:12px;">
+        <button class="btn btn-outline btn-sm" onclick="stopScanner()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Group Grid (manual selection fallback) -->
+    <div class="section-title" style="margin-top:8px;">Or select manually</div>
     <div class="group-grid" id="group-grid"></div>
 
-    <div class="scoring-panel hidden" id="scoring-panel">
-      <div class="scoring-header">
+    <!-- Voting Panel -->
+    <div class="voting-panel hidden" id="voting-panel">
+      <div class="voting-header">
         <div>
-          <h3 id="scoring-group-name"></h3>
-          <span class="badge" id="scoring-badge"></span>
+          <h3 id="voting-group-name"></h3>
+          <span class="badge" id="voting-badge"></span>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="countdown-ring" id="countdown-ring" title="Time on this project">
-            <svg width="40" height="40">
-              <circle class="ring-bg" r="17" cx="20" cy="20"/>
-              <circle class="ring-fg" id="countdown-fg" r="17" cx="20" cy="20"
-                stroke-dasharray="106.81" stroke-dashoffset="0"/>
-            </svg>
-            <div class="countdown-time" id="countdown-time">5:00</div>
-          </div>
-          <button class="btn btn-outline btn-sm" onclick="closeScoring()">Close</button>
-        </div>
+        <button class="btn btn-outline btn-sm" onclick="closeVoting()">Close</button>
       </div>
-      <div id="sliders-container"></div>
+      <div class="voting-prompt">Select one option for this project:</div>
+      <div class="vote-options" id="vote-options"></div>
       <div class="submit-row">
-        <button class="btn btn-success" onclick="submitVote()">Submit Score</button>
+        <button class="btn btn-success" id="btn-submit-vote" onclick="submitVote()" disabled>Submit Vote</button>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== TUTORIAL OVERLAY ===== -->
-<div class="tutorial-overlay hidden" id="tutorial-overlay" onclick="if(event.target===this)closeTutorial()">
-  <div class="tutorial-modal">
-    <div class="tutorial-step" data-step="0">
-      <div class="tutorial-anim">
-        <div class="anim-cards">
-          <div class="anim-card tapped">Group 1</div>
-          <div class="anim-card">Group 2</div>
-        </div>
-        <div class="anim-finger">&#9757;</div>
-      </div>
-      <h3>Select a Project</h3>
-      <p>Tap any project card to begin scoring</p>
-    </div>
-    <div class="tutorial-step hidden" data-step="1">
-      <div class="tutorial-anim">
-        <div class="anim-slider-wrap">
-          <div class="anim-track"><div class="anim-dot"></div></div>
-          <div class="anim-labels"><span>Fair</span><span>Average</span><span>Good</span><span>Excellent</span></div>
-        </div>
-      </div>
-      <h3>Slide to Score</h3>
-      <p>Drag the slider for each criterion (Fair &rarr; Excellent)</p>
-    </div>
-    <div class="tutorial-step hidden" data-step="2">
-      <div class="tutorial-anim">
-        <div class="anim-btn">Submit Score</div>
-      </div>
-      <h3>Submit Your Score</h3>
-      <p>Tap Submit Score when you're done</p>
-    </div>
-    <div class="tutorial-nav">
-      <div class="tutorial-dots">
-        <div class="tutorial-dot active"></div>
-        <div class="tutorial-dot"></div>
-        <div class="tutorial-dot"></div>
-      </div>
-      <button class="btn btn-primary" id="tutorial-next" onclick="tutorialNext()">Next</button>
     </div>
   </div>
 </div>
@@ -486,29 +335,31 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
     </div>
   </div>
 
-  <div class="tabs" id="award-tabs"></div>
-  <div class="leaderboard" id="leaderboard"></div>
+  <div class="tabs" id="admin-tabs"></div>
 
-  <div class="judge-grid-title">Judge Completion</div>
+  <!-- Results tab content -->
+  <div id="admin-results"></div>
+
+  <!-- QR Codes tab content -->
+  <div id="admin-qr-codes" class="hidden"></div>
+
+  <div class="judge-grid-title" id="judge-grid-title">Judge Completion</div>
   <div class="judge-grid" id="judge-grid"></div>
 </div>
 
 <script>
 // ===== STATE =====
-let CONFIG = { judges: [], groups: [], awards: [] };
+let CONFIG = { judges: [], groups: [] };
 let currentJudge = null;
 let currentGroupId = null;
+let selectedChoice = null;
 let judgeVotes = {};
-let activeAwardTab = 0;
+let activeAdminTab = 0;
 let adminRefreshTimer = null;
 let heartbeatTimer = null;
+let qrScanner = null;
+let scannerRunning = false;
 const SESSION_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
-
-const SCORE_LABELS = { 2: 'Fair', 3: 'Average', 4: 'Good', 5: 'Excellent' };
-const TICK_VALUES = [2, 2.5, 3, 3.5, 4, 4.5, 5];
-function scoreLabel(val) {
-  return SCORE_LABELS[Math.floor(val)] || '';
-}
 const CAT_COLORS = { NPI: '#0984e3', NTI: '#e17055', AI: '#a29bfe' };
 
 // ===== INIT =====
@@ -520,7 +371,6 @@ async function init() {
 
 async function populateJudgeSelect() {
   const sel = document.getElementById('judge-select');
-  // Clear existing options (keep placeholder)
   while (sel.options.length > 1) sel.remove(1);
 
   const lockedRes = await fetch('/api/judge/locked');
@@ -551,6 +401,7 @@ function showLogin() { showView('view-login'); }
 function showAdminLogin() { showView('view-admin-pin'); document.getElementById('pin-input').value = ''; }
 
 async function logout() {
+  stopScanner();
   if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
   if (currentJudge) {
     await fetch('/api/judge/unlock', {
@@ -570,7 +421,6 @@ async function loginAsJudge() {
   const sel = document.getElementById('judge-select');
   if (!sel.value) return;
 
-  // Try to acquire lock
   const lockRes = await fetch('/api/judge/lock', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -579,14 +429,13 @@ async function loginAsJudge() {
   if (!lockRes.ok) {
     const err = await lockRes.json();
     showToast(err.error || 'This judge is already in use');
-    await populateJudgeSelect();  // refresh list
+    await populateJudgeSelect();
     return;
   }
 
   currentJudge = sel.value;
   document.getElementById('judge-label').textContent = currentJudge;
 
-  // Start heartbeat every 20s
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = setInterval(sendHeartbeat, 60000);
 
@@ -594,11 +443,8 @@ async function loginAsJudge() {
   judgeVotes = await res.json();
 
   renderGroupGrid();
-  closeScoring();
+  closeVoting();
   showView('view-judge');
-
-  // Show tutorial on every login
-  showTutorial();
 }
 
 function sendHeartbeat() {
@@ -608,6 +454,73 @@ function sendHeartbeat() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ judge: currentJudge, session_id: SESSION_ID }),
   }).catch(() => {});
+}
+
+// ===== QR SCANNER =====
+function toggleScanner() {
+  if (scannerRunning) {
+    stopScanner();
+  } else {
+    startScanner();
+  }
+}
+
+function startScanner() {
+  const wrap = document.getElementById('qr-reader-wrap');
+  wrap.classList.remove('hidden');
+  document.getElementById('btn-scan').textContent = 'Scanning...';
+  scannerRunning = true;
+
+  qrScanner = new Html5Qrcode("qr-reader");
+  qrScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    (decodedText) => {
+      onQrScanned(decodedText);
+    },
+    () => {}
+  ).catch(err => {
+    showToast('Camera access denied or not available');
+    stopScanner();
+  });
+}
+
+function stopScanner() {
+  scannerRunning = false;
+  document.getElementById('qr-reader-wrap').classList.add('hidden');
+  const scanBtn = document.getElementById('btn-scan');
+  scanBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/>
+      <rect x="7" y="7" width="10" height="10" rx="1"/>
+    </svg>
+    Scan QR Code`;
+  if (qrScanner) {
+    qrScanner.stop().catch(() => {});
+    qrScanner.clear();
+    qrScanner = null;
+  }
+}
+
+function onQrScanned(text) {
+  stopScanner();
+  // Try to match group_id directly
+  const group = CONFIG.groups.find(g => g.id === text.trim());
+  if (group) {
+    openVoting(group.id);
+  } else {
+    // Try extracting group_id from a URL like ?group=NPI-1
+    const match = text.match(/[?&]group=([^&]+)/);
+    if (match) {
+      const gid = decodeURIComponent(match[1]);
+      const g = CONFIG.groups.find(gr => gr.id === gid);
+      if (g) {
+        openVoting(g.id);
+        return;
+      }
+    }
+    showToast('Unknown QR code: ' + text);
+  }
 }
 
 // ===== GROUP GRID =====
@@ -622,7 +535,7 @@ function renderGroupGrid() {
 
     const card = document.createElement('div');
     card.className = `group-card${isScored ? ' scored' : ''}${currentGroupId === g.id ? ' active' : ''}`;
-    card.onclick = () => openScoring(g.id);
+    card.onclick = () => openVoting(g.id);
     card.innerHTML = `
       <span class="badge badge-${g.category}">${g.category}</span>
       <div class="group-info"><div class="group-name">${g.name}</div></div>
@@ -636,204 +549,92 @@ function renderGroupGrid() {
     `${(scored / CONFIG.groups.length) * 100}%`;
 }
 
-// ===== SCORING =====
-function openScoring(groupId) {
+// ===== VOTING =====
+function openVoting(groupId) {
   currentGroupId = groupId;
+  selectedChoice = null;
   const group = CONFIG.groups.find(g => g.id === groupId);
   if (!group) return;
 
-  document.getElementById('scoring-group-name').textContent = group.name;
-  const badge = document.getElementById('scoring-badge');
+  document.getElementById('voting-group-name').textContent = group.name;
+  const badge = document.getElementById('voting-badge');
   badge.textContent = group.category;
   badge.className = `badge badge-${group.category}`;
 
-  const container = document.getElementById('sliders-container');
-  container.innerHTML = '';
+  const optionsContainer = document.getElementById('vote-options');
+  optionsContainer.innerHTML = '';
 
   const existing = judgeVotes[groupId];
 
-  const descriptions = CONFIG.criteria_descriptions || {};
+  group.vote_options.forEach(option => {
+    const btn = document.createElement('button');
+    btn.className = 'vote-option-btn';
+    btn.textContent = option;
+    btn.dataset.option = option;
 
-  group.criteria.forEach((crit, i) => {
-    const val = existing ? existing.scores[i] : 3;
-    const pct = (val - 2) / 3 * 100;
-    const critDescs = descriptions[crit] || {};
-    const desc = critDescs[String(val)] || '';
-    const div = document.createElement('div');
-    div.className = 'slider-group';
-    div.innerHTML = `
-      <div class="slider-label">${crit}</div>
-      <div class="slider-wrap">
-        <div class="slider-track" data-idx="${i}" data-crit="${crit}">
-          <div class="slider-fill" style="width:${pct}%"></div>
-          <div class="slider-thumb" style="left:${pct}%"></div>
-        </div>
-        <div class="slider-ticks">
-          ${TICK_VALUES.map(tv => `
-            <div class="slider-tick" data-idx="${i}" data-val="${tv}">
-              <div class="slider-tick-dot${tv <= val ? ' active' : ''}${Number.isInteger(tv) ? '' : ' half'}"></div>
-              <div class="slider-tick-label">${Number.isInteger(tv) ? SCORE_LABELS[tv] : ''}</div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="slider-value">${scoreLabel(val)} (${val})</div>
-        <div class="slider-desc">${desc}</div>
-      </div>
-      <input type="hidden" class="score-input" data-idx="${i}" value="${val}">
-    `;
-    container.appendChild(div);
-  });
-
-  // Attach slider events
-  container.querySelectorAll('.slider-tick').forEach(tick => {
-    tick.addEventListener('click', (e) => {
-      const idx = parseInt(tick.dataset.idx);
-      const val = parseFloat(tick.dataset.val);
-      setSliderValue(idx, val);
-    });
-  });
-
-  // Drag support
-  container.querySelectorAll('.slider-track').forEach(track => {
-    const idx = parseInt(track.dataset.idx);
-    const thumb = track.querySelector('.slider-thumb');
-
-    function handleDrag(clientX) {
-      const rect = track.getBoundingClientRect();
-      let pct = (clientX - rect.left) / rect.width;
-      pct = Math.max(0, Math.min(1, pct));
-      const val = Math.round(pct * 6) / 2 + 2;
-      setSliderValue(idx, val);
+    if (existing && existing.vote_choice === option) {
+      btn.classList.add('voted');
+      selectedChoice = option;
     }
 
-    thumb.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      const onMove = (ev) => handleDrag(ev.clientX);
-      const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    });
-
-    thumb.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const onMove = (ev) => handleDrag(ev.touches[0].clientX);
-      const onEnd = () => { document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onEnd); };
-      document.addEventListener('touchmove', onMove);
-      document.addEventListener('touchend', onEnd);
-    });
-
-    track.addEventListener('click', (e) => handleDrag(e.clientX));
+    btn.onclick = () => selectOption(option);
+    optionsContainer.appendChild(btn);
   });
 
-  document.getElementById('scoring-panel').classList.remove('hidden');
-  document.getElementById('judge-workspace').classList.add('scoring-active');
-  startCountdown();
+  updateSubmitButton();
+  document.getElementById('voting-panel').classList.remove('hidden');
+  document.getElementById('judge-workspace').classList.add('voting-active');
   renderGroupGrid();
 
-  // In landscape tablet, scoring panel is beside the grid — no need to scroll
   const isLandscapeTablet = window.innerWidth >= 768 && window.matchMedia('(orientation: landscape)').matches;
   if (!isLandscapeTablet) {
-    document.getElementById('scoring-panel').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('voting-panel').scrollIntoView({ behavior: 'smooth' });
   }
 }
 
-function setSliderValue(idx, val) {
-  const panel = document.getElementById('sliders-container');
-  const input = panel.querySelector(`.score-input[data-idx="${idx}"]`);
-  input.value = val;
-
-  const group = panel.querySelectorAll('.slider-group')[idx];
-  const fill = group.querySelector('.slider-fill');
-  const thumb = group.querySelector('.slider-thumb');
-  const track = group.querySelector('.slider-track');
-  const pct = (val - 2) / 3 * 100;
-  fill.style.width = pct + '%';
-  thumb.style.left = pct + '%';
-
-  group.querySelectorAll('.slider-tick-dot').forEach((dot, i) => {
-    dot.classList.toggle('active', TICK_VALUES[i] <= val);
-  });
-
-  group.querySelector('.slider-value').textContent = `${scoreLabel(val)} (${val})`;
-
-  const crit = track.dataset.crit;
-  const descriptions = CONFIG.criteria_descriptions || {};
-  const critDescs = descriptions[crit] || {};
-  const desc = critDescs[String(val)] || '';
-  group.querySelector('.slider-desc').textContent = desc;
-}
-
-// ===== COUNTDOWN TIMER =====
-const COUNTDOWN_TOTAL = 300; // 5 minutes
-const RING_CIRCUMFERENCE = 2 * Math.PI * 17; // ~106.81
-let countdownTimer = null;
-let countdownRemaining = 0;
-
-function startCountdown() {
-  stopCountdown();
-  countdownRemaining = COUNTDOWN_TOTAL;
-  updateCountdownDisplay();
-  countdownTimer = setInterval(() => {
-    countdownRemaining--;
-    updateCountdownDisplay();
-    if (countdownRemaining <= 0) {
-      clearInterval(countdownTimer);
-      countdownTimer = null;
+function selectOption(option) {
+  selectedChoice = option;
+  document.querySelectorAll('.vote-option-btn').forEach(btn => {
+    btn.classList.remove('selected', 'voted');
+    if (btn.dataset.option === option) {
+      btn.classList.add('selected');
     }
-  }, 1000);
+  });
+  updateSubmitButton();
 }
 
-function stopCountdown() {
-  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+function updateSubmitButton() {
+  document.getElementById('btn-submit-vote').disabled = !selectedChoice;
 }
 
-function updateCountdownDisplay() {
-  const ring = document.getElementById('countdown-ring');
-  const fg = document.getElementById('countdown-fg');
-  const label = document.getElementById('countdown-time');
-
-  const secs = Math.max(0, countdownRemaining);
-  const min = Math.floor(secs / 60);
-  const sec = secs % 60;
-  label.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
-
-  const progress = secs / COUNTDOWN_TOTAL;
-  fg.setAttribute('stroke-dashoffset', ((1 - progress) * RING_CIRCUMFERENCE).toFixed(1));
-
-  ring.classList.toggle('warn', secs <= 60 && secs > 0);
-  ring.classList.toggle('urgent', secs <= 0);
-}
-
-function closeScoring() {
+function closeVoting() {
   currentGroupId = null;
-  stopCountdown();
-  document.getElementById('scoring-panel').classList.add('hidden');
-  document.getElementById('judge-workspace').classList.remove('scoring-active');
+  selectedChoice = null;
+  document.getElementById('voting-panel').classList.add('hidden');
+  document.getElementById('judge-workspace').classList.remove('voting-active');
   renderGroupGrid();
 }
 
 async function submitVote() {
-  const panel = document.getElementById('sliders-container');
-  const scores = [];
-  panel.querySelectorAll('.score-input').forEach(inp => scores.push(parseFloat(inp.value)));
-
-  if (scores.length !== 3) {
-    showToast('Error: Invalid score data');
-    return;
-  }
+  if (!selectedChoice || !currentGroupId) return;
 
   const res = await fetch('/api/vote', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ judge: currentJudge, group_id: currentGroupId, scores, comment: '' }),
+    body: JSON.stringify({
+      judge: currentJudge,
+      group_id: currentGroupId,
+      vote_choice: selectedChoice,
+    }),
   });
 
   if (res.ok) {
-    judgeVotes[currentGroupId] = { scores, comment: '' };
-    showToast('Score submitted!');
-    closeScoring();
+    judgeVotes[currentGroupId] = { vote_choice: selectedChoice };
+    showToast('Vote submitted!');
+    closeVoting();
   } else {
-    showToast('Error submitting score');
+    const err = await res.json();
+    showToast(err.error || 'Error submitting vote');
   }
 }
 
@@ -855,57 +656,86 @@ async function verifyPin() {
   }
 }
 
+// Admin tabs: one per category + QR Codes
+function getAdminTabNames() {
+  const cats = [];
+  CONFIG.groups.forEach(g => {
+    if (!cats.includes(g.category)) cats.push(g.category);
+  });
+  return [...cats, 'QR Codes'];
+}
+
 function renderAdminTabs() {
-  const container = document.getElementById('award-tabs');
+  const container = document.getElementById('admin-tabs');
   container.innerHTML = '';
-  CONFIG.awards.forEach((a, i) => {
+  const tabNames = getAdminTabNames();
+  tabNames.forEach((name, i) => {
     const tab = document.createElement('button');
-    tab.className = `tab${i === activeAwardTab ? ' active' : ''}`;
-    tab.textContent = a.name;
-    tab.onclick = () => { activeAwardTab = i; renderAdminTabs(); loadAdminData(); };
+    tab.className = `tab${i === activeAdminTab ? ' active' : ''}`;
+    tab.textContent = name;
+    tab.onclick = () => { activeAdminTab = i; renderAdminTabs(); loadAdminData(); };
     container.appendChild(tab);
   });
 }
 
 async function loadAdminData() {
+  const tabNames = getAdminTabNames();
+  const currentTab = tabNames[activeAdminTab] || tabNames[0];
+
+  if (currentTab === 'QR Codes') {
+    document.getElementById('admin-results').classList.add('hidden');
+    document.getElementById('admin-qr-codes').classList.remove('hidden');
+    document.getElementById('judge-grid-title').classList.add('hidden');
+    document.getElementById('judge-grid').classList.add('hidden');
+    renderQrCodes();
+    return;
+  }
+
+  document.getElementById('admin-results').classList.remove('hidden');
+  document.getElementById('admin-qr-codes').classList.add('hidden');
+  document.getElementById('judge-grid-title').classList.remove('hidden');
+  document.getElementById('judge-grid').classList.remove('hidden');
+
   const [resultsRes, progressRes] = await Promise.all([
     fetch('/api/results'), fetch('/api/progress')
   ]);
   const results = await resultsRes.json();
   const progress = await progressRes.json();
 
-  renderLeaderboard(results[activeAwardTab]);
+  // Find the category result matching current tab
+  const catResult = results.find(r => r.category === currentTab);
+  renderResults(catResult);
   renderJudgeGrid(progress);
 }
 
-function renderLeaderboard(award) {
-  const container = document.getElementById('leaderboard');
-  if (!award || !award.groups.length) {
+function renderResults(catResult) {
+  const container = document.getElementById('admin-results');
+  if (!catResult || !catResult.groups.length) {
     container.innerHTML = '<p style="color:var(--text2);">No data yet.</p>';
     return;
   }
 
-  const maxScore = 5;
-  let html = `<table class="lb-table">
-    <thead><tr><th>Rank</th><th>Group</th><th>Category</th><th>Avg Score</th><th>Judges</th></tr></thead><tbody>`;
+  const options = catResult.vote_options || [];
+  let html = `<div class="results-section">
+    <table class="results-table">
+    <thead><tr>
+      <th>Rank</th><th>Group</th>`;
+  options.forEach(opt => { html += `<th>${opt}</th>`; });
+  html += `<th>Total</th></tr></thead><tbody>`;
 
-  award.groups.forEach((g, i) => {
-    const pct = (g.avg_score / maxScore) * 100;
-    const color = CAT_COLORS[g.category] || '#6c5ce7';
-    const isWinner = i === 0 && g.avg_score > 0;
+  catResult.groups.forEach((g, i) => {
+    const isWinner = i === 0 && g.total_votes > 0;
     html += `<tr class="${isWinner ? 'winner' : ''}">
       <td class="rank">${isWinner ? '\u{1F3C6}' : i + 1}</td>
-      <td>${g.name}</td>
-      <td><span class="badge badge-${g.category}">${g.category}</span></td>
-      <td><div class="score-bar-wrap">
-        <div class="score-bar"><div class="score-bar-inner" style="width:${pct}%;background:${color}"></div></div>
-        <span class="score-val">${g.avg_score.toFixed(2)}</span>
-      </div></td>
-      <td class="judge-count">${g.judge_count}</td>
-    </tr>`;
+      <td>${g.name}</td>`;
+    options.forEach(opt => {
+      const count = g.votes[opt] || 0;
+      html += `<td><span class="tally-chip${count > 0 ? ' has-votes' : ''}">${count}</span></td>`;
+    });
+    html += `<td style="font-weight:700;">${g.total_votes}</td></tr>`;
   });
 
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   container.innerHTML = html;
 }
 
@@ -913,7 +743,7 @@ function renderJudgeGrid(progress) {
   const container = document.getElementById('judge-grid');
   container.innerHTML = '';
   CONFIG.judges.forEach(j => {
-    const p = progress[j] || { completed: 0, total: 18 };
+    const p = progress[j] || { completed: 0, total: CONFIG.groups.length };
     const pct = (p.completed / p.total) * 100;
     const isComplete = p.completed === p.total;
     const cell = document.createElement('div');
@@ -931,6 +761,52 @@ function renderJudgeGrid(progress) {
   });
 }
 
+// ===== QR CODE GENERATION (Admin) =====
+function renderQrCodes() {
+  const container = document.getElementById('admin-qr-codes');
+  container.innerHTML = '<p style="color:var(--text2);margin-bottom:16px;">Print these QR codes and place them at each booth. Each code contains the group ID.</p>';
+
+  const grid = document.createElement('div');
+  grid.className = 'qr-print-grid';
+
+  CONFIG.groups.forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'qr-print-card';
+    card.innerHTML = `
+      <h4>${g.name}</h4>
+      <div class="qr-cat">${g.category} | ID: ${g.id}</div>
+      <div id="qr-${g.id}"></div>
+    `;
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
+
+  const printBtn = document.createElement('button');
+  printBtn.className = 'btn btn-primary';
+  printBtn.style.marginTop = '20px';
+  printBtn.textContent = 'Print QR Codes';
+  printBtn.onclick = () => window.print();
+  container.appendChild(printBtn);
+
+  // Generate QR codes after DOM update
+  requestAnimationFrame(() => {
+    CONFIG.groups.forEach(g => {
+      const el = document.getElementById(`qr-${g.id}`);
+      if (el) {
+        new QRCode(el, {
+          text: g.id,
+          width: 160,
+          height: 160,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+      }
+    });
+  });
+}
+
 // ===== TOAST =====
 function showToast(msg) {
   const el = document.getElementById('toast');
@@ -938,50 +814,6 @@ function showToast(msg) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2000);
 }
-
-// ===== TUTORIAL =====
-let tutorialStep = 0;
-
-function showTutorial() {
-  tutorialStep = 0;
-  const overlay = document.getElementById('tutorial-overlay');
-  overlay.classList.remove('hidden');
-  updateTutorialStep();
-}
-
-function tutorialNext() {
-  tutorialStep++;
-  if (tutorialStep >= 3) {
-    closeTutorial();
-    return;
-  }
-  updateTutorialStep();
-}
-
-function updateTutorialStep() {
-  const steps = document.querySelectorAll('.tutorial-step');
-  const dots = document.querySelectorAll('.tutorial-dot');
-  const nextBtn = document.getElementById('tutorial-next');
-
-  steps.forEach((s, i) => s.classList.toggle('hidden', i !== tutorialStep));
-  dots.forEach((d, i) => d.classList.toggle('active', i === tutorialStep));
-  nextBtn.textContent = tutorialStep === 2 ? 'Got it!' : 'Next';
-}
-
-function closeTutorial() {
-  document.getElementById('tutorial-overlay').classList.add('hidden');
-  localStorage.setItem('tutorial_seen', '1');
-}
-
-// ===== TABLET ORIENTATION =====
-window.addEventListener('orientationchange', () => {
-  setTimeout(() => {
-    const grid = document.getElementById('group-grid');
-    if (grid) grid.scrollTop = 0;
-    const panel = document.getElementById('scoring-panel');
-    if (panel) panel.scrollTop = 0;
-  }, 200);
-});
 
 // ===== PAGE UNLOAD: release lock =====
 window.addEventListener('beforeunload', () => {
