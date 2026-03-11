@@ -89,6 +89,8 @@ input, select { font-family: inherit; font-size: inherit; }
 .group-card.scored { border-color: var(--success); background: var(--success); color: #fff; }
 .group-card.scored .group-name { color: #fff; }
 .group-card.scored .badge { background: rgba(255,255,255,.2); color: #fff; }
+.badge-prfaq { background: rgba(253,203,110,.18); color: #fdcb6e; margin-left: 4px; }
+.group-card.scored .badge-prfaq { background: rgba(253,203,110,.25); color: #fdcb6e; }
 .group-card.active { border-color: var(--primary); background: var(--surface2); }
 .badge { padding: 2px 8px; border-radius: 12px; font-size: 0.62rem;
   font-weight: 700; text-transform: uppercase; letter-spacing: .5px; display: inline-block; align-self: flex-start; }
@@ -111,7 +113,7 @@ input, select { font-family: inherit; font-size: inherit; }
   font-weight: 600; transition: all .15s; }
 .btn-close-vote:hover { border-color: var(--text); color: #fff; }
 .vote-options { display: flex; justify-content: center; align-items: center;
-  gap: 24px; flex: 1; margin-bottom: 16px; min-height: 0; }
+  gap: 28px; flex: 1; margin-bottom: 16px; min-height: 0; }
 .vote-option-btn { aspect-ratio: 1; width: min(38vh, 28vw); max-width: 360px;
   border: 2px solid var(--border); border-radius: 16px;
   background: var(--surface2); color: var(--text); font-size: 1.8rem; font-weight: 700;
@@ -269,6 +271,7 @@ input, select { font-family: inherit; font-size: inherit; }
     <div class="progress-label">
       <span>Voting Progress</span>
       <span id="progress-text">0 / 21</span>
+      <span id="prfaq-counter" style="margin-left:12px; color:var(--warning); font-weight:600;">PRFAQ: 0/4</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
   </div>
@@ -504,6 +507,22 @@ async function onQrScanned(text) {
   qrProcessing = false;
 }
 
+// ===== PRFAQ LIMIT =====
+const MAX_PRFAQ = 4;
+function getPrfaqCount(excludeGroupId) {
+  let count = 0;
+  for (const [gid, v] of Object.entries(judgeVotes)) {
+    if (gid === excludeGroupId) continue;
+    if (v.vote_choices && v.vote_choices.includes('PRFAQ')) count++;
+  }
+  return count;
+}
+
+function updatePrfaqCounter() {
+  const el = document.getElementById('prfaq-counter');
+  if (el) el.textContent = `PRFAQ: ${getPrfaqCount(null)}/${MAX_PRFAQ}`;
+}
+
 // ===== GROUP GRID =====
 function renderGroupGrid() {
   const grid = document.getElementById('group-grid');
@@ -516,8 +535,13 @@ function renderGroupGrid() {
     const card = document.createElement('div');
     card.className = `group-card${isScored ? ' scored' : ''}${currentGroupId === g.id ? ' active' : ''}`;
     card.onclick = () => openVoting(g.id);
+    const displayCat = g.display_category || g.category;
+    const hasPrfaq = existing && existing.vote_choices && existing.vote_choices.includes('PRFAQ');
     card.innerHTML = `
-      <span class="badge badge-${g.category}">${g.category}</span>
+      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+        <span class="badge badge-${displayCat}">${displayCat}</span>
+        ${hasPrfaq ? '<span class="badge badge-prfaq">★ PRFAQ</span>' : ''}
+      </div>
       <div class="group-name">${g.name}</div>
       ${isScored ? '<span class="check-mark">&#10003;</span>' : ''}
     `;
@@ -525,6 +549,7 @@ function renderGroupGrid() {
   });
   document.getElementById('progress-text').textContent = `${scored} / ${CONFIG.groups.length}`;
   document.getElementById('progress-fill').style.width = `${(scored / CONFIG.groups.length) * 100}%`;
+  updatePrfaqCounter();
 }
 
 // ===== VOTING =====
@@ -563,7 +588,15 @@ function openVoting(groupId) {
 
 function toggleOption(option) {
   const idx = selectedChoices.indexOf(option);
-  if (idx >= 0) selectedChoices.splice(idx, 1); else selectedChoices.push(option);
+  if (idx >= 0) {
+    selectedChoices.splice(idx, 1);
+  } else {
+    if (option === 'PRFAQ' && getPrfaqCount(currentGroupId) >= MAX_PRFAQ) {
+      showToast(`You can only select PRFAQ for up to ${MAX_PRFAQ} groups`, 'warning');
+      return;
+    }
+    selectedChoices.push(option);
+  }
   document.querySelectorAll('.vote-option-btn').forEach(btn => {
     btn.classList.toggle('selected', selectedChoices.includes(btn.dataset.option));
   });
@@ -582,6 +615,10 @@ function closeVoting() {
 
 async function submitVote() {
   if (selectedChoices.length === 0 || !currentGroupId) return;
+  if (selectedChoices.includes('PRFAQ') && getPrfaqCount(currentGroupId) >= MAX_PRFAQ) {
+    showToast(`You can only select PRFAQ for up to ${MAX_PRFAQ} groups`, 'warning');
+    return;
+  }
   const res = await fetch('/api/vote', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ judge: currentJudge, group_id: currentGroupId, vote_choices: selectedChoices }),
@@ -611,7 +648,10 @@ async function verifyPin() {
 
 function getAdminTabNames() {
   const cats = [];
-  CONFIG.groups.forEach(g => { if (!cats.includes(g.category)) cats.push(g.category); });
+  CONFIG.groups.forEach(g => {
+    const dc = g.display_category || g.category;
+    if (!cats.includes(dc)) cats.push(dc);
+  });
   return [...cats, 'QR Codes'];
 }
 
@@ -661,13 +701,26 @@ function renderResults(catResult) {
   let html = `<table class="results-table"><thead><tr><th>Rank</th><th>Group</th>`;
   options.forEach(opt => { html += `<th>${opt}</th>`; });
   html += `<th>Total</th><th>Judges</th></tr></thead><tbody>`;
+  // Build set of valid options per original_category
+  const optionsByOrigCat = {};
+  CONFIG.groups.forEach(gr => {
+    if (!optionsByOrigCat[gr.category]) {
+      const opts = (gr.vote_options || []).map(o => o.label || o);
+      optionsByOrigCat[gr.category] = new Set(opts);
+    }
+  });
   catResult.groups.forEach((g, i) => {
     const isWinner = i === 0 && g.total_votes > 0;
+    const validOpts = optionsByOrigCat[g.original_category] || new Set();
     html += `<tr class="${isWinner ? 'winner' : ''}">
       <td class="rank">${isWinner ? '\u{1F3C6}' : i + 1}</td><td>${g.name}</td>`;
     options.forEach(opt => {
-      const count = g.votes[opt] || 0;
-      html += `<td><span class="tally-chip${count > 0 ? ' has-votes' : ''}">${count}</span></td>`;
+      if (!validOpts.has(opt)) {
+        html += `<td><span class="tally-chip" style="opacity:.25;">—</span></td>`;
+      } else {
+        const count = g.votes[opt] || 0;
+        html += `<td><span class="tally-chip${count > 0 ? ' has-votes' : ''}">${count}</span></td>`;
+      }
     });
     html += `<td style="font-weight:700;">${g.total_votes}</td>
       <td style="color:var(--text2);font-size:0.82rem;">${g.judge_count}</td></tr>`;
@@ -720,10 +773,13 @@ function renderQrCodes() {
 }
 
 // ===== TOAST =====
-function showToast(msg) {
+function showToast(msg, type) {
   const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2000);
+  el.textContent = msg;
+  el.style.background = type === 'warning' ? 'var(--warning)' : 'var(--success)';
+  el.style.color = type === 'warning' ? '#000' : '#fff';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
 }
 
 // ===== PAGE UNLOAD =====

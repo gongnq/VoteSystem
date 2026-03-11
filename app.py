@@ -23,37 +23,45 @@ JUDGES = ["Rob", "Regien", "Adam", "Amit", "Alok", "Prasad", "Volker", "Toby", "
 
 # ---------------------------------------------------------------------------
 # GROUPS — (id, display_name, category)
-# Category is "NPI" or "NTI". Change as needed once decided.
+# "NPI_PRE" = NPI groups with the extra PRE-ORDER option (displayed as "NPI")
 # ---------------------------------------------------------------------------
 GROUPS = [
-    ("G-1",  "1. An Inner Spider Speaker Construction for Full Range", "NPI"),
-    ("G-2",  "2. Edge to Edge Display Cover Lens", "NPI"),
-    ("G-3",  "3. BOBArtender - AI-Powered Bubble Tea Generation", "NPI"),
-    ("G-4",  "4. The Family AI Cinema Butler", "NPI"),
-    ("G-5",  "5. Echo Frames Reimagined", "NPI"),
-    ("G-6",  "6. Alexa UI Plus - Fire TV Smart Scene Analysis", "NPI"),
-    ("G-7",  "7. Pulse ID", "NPI"),
-    ("G-8",  "8. Re-imagined Wireless Charging for Metal Cover Devices", "NPI"),
-    ("G-9",  "9. Stratos", "NPI"),
-    ("G-10", "10. Multi-Modal Competitive Intelligence AI Agent", "NPI"),
-    ("G-11", "11. Hercules: A Cloud-based AI/ML Platform", "NPI"),
-    ("G-12", "12. Manufacturing Smart Assistant", "NPI"),
-    ("G-13", "13. Intelligent Quality: AI-Powered Battery Mfg at Scale", "NPI"),
-    ("G-14", "14. Green Design 1", "NPI"),
-    ("G-15", "15. Green Design 2: Recyclable PCB Substrate & Additive Mfg", "NPI"),
-    ("G-16", "16. Story Pal: AI Plush Multilingual Stories to Life", "NPI"),
-    ("G-17", "17. AI Multimodal E-commerce Product Shooting Camera", "NPI"),
-    ("G-18", "18. AI Vision Mate Glasses - Second Sight", "NPI"),
-    ("G-19", "19. Detachable Flip Camera 360 for Echo Show Devices", "NPI"),
-    ("G-20", "20. Smart Necklace: AI-Powered Personal Assistant", "NPI"),
-    ("G-21", "21. Chroma Mirror: The AI Stylist", "NPI"),
+    ("G-1",  "1. Echo Frames Reimagined: Your Private AI Assistant for Work, Life & Shopping", "NPI"),
+    ("G-2",  "2. Alexa UI Plus - Fire TV Smart Scene Analysis", "NPI"),
+    ("G-3",  "3. Pulse ID", "NPI_PRE"),
+    ("G-4",  "4. Re-imagined Wireless Charging for Metal Cover Devices", "NPI"),
+    ("G-5",  "5. Story Pal: The AI-Plush That Brings Multilingual Stories to Life", "NPI_PRE"),
+    ("G-6",  "6. AI Powered Multimodal E-commerce Product Shooting Camera", "NPI_PRE"),
+    ("G-7",  "7. AI Vision Mate Glasses - Second Sight for the Visually Impaired", "NPI"),
+    ("G-8",  "8. Detachable Flip Camera Module with 360-degree Field for Echo Show Devices", "NPI"),
+    ("G-9",  "9. Smart Necklace Transforms Daily Life With AI-Powered Personal Assistant", "NPI_PRE"),
+    ("G-10", "10. Chroma Mirror: The AI Stylist That Unlocks Your Most Confident Look", "NPI"),
+    ("G-11", "11. An Inner Spider Speaker Construction for Full Range", "NTI"),
+    ("G-12", "12. Edge to Edge Display Cover Lens", "NTI"),
+    ("G-13", "13. BOBArtender - AI-Powered Bubble Tea Generation", "NTI"),
+    ("G-14", "14. The Family AI Cinema Butler: A TV That Knows You and Brings You Together", "NTI"),
+    ("G-15", "15. Stratos", "NTI"),
+    ("G-16", "16. Multi-Modal Competitive Intelligence AI Agent", "NTI"),
+    ("G-17", "17. Hercules: A Cloud-based AI/ML Platform", "NTI"),
+    ("G-18", "18. Manufacturing Smart Assistant", "NTI"),
+    ("G-19", "19. Intelligent Quality: AI-Powered Battery Manufacturing at Scale", "NTI"),
+    ("G-20", "20. Green Design 1", "NTI"),
+    ("G-21", "21. Green Design 2: New-to-Industry PCB Technologies of Recyclable Substrate & Additive Manufacturing", "NTI"),
 ]
+
+# Maps internal category to the display label shown in badges and admin tabs
+DISPLAY_CATEGORY = {"NPI": "NPI", "NPI_PRE": "NPI", "NTI": "NTI"}
 
 # ---------------------------------------------------------------------------
 # VOTE OPTIONS per category — judge can select multiple per group
+# NPI = 2 options, NPI_PRE = 3 options (adds PRE-ORDER), NTI = 3 options
 # ---------------------------------------------------------------------------
 VOTE_OPTIONS_BY_CATEGORY = {
     "NPI": [
+        {"label": "PRFAQ", "subtitle": "(Product Maker)"},
+        {"label": "Customer Delight"},
+    ],
+    "NPI_PRE": [
         {"label": "PRFAQ", "subtitle": "(Product Maker)"},
         {"label": "PRE-ORDER"},
         {"label": "Customer Delight"},
@@ -70,6 +78,7 @@ VOTE_OPTIONS_BY_CATEGORY = {
 # ---------------------------------------------------------------------------
 CATEGORY_DESCRIPTIONS = {
     "NPI": "New Product Concepts: Customer-facing innovations that address unmet market needs, driving new revenue streams through differentiated design and user experience",
+    "NPI_PRE": "New Product Concepts: Customer-facing innovations that address unmet market needs, driving new revenue streams through differentiated design and user experience",
     "NTI": "New Innovation Pipeline: Core technology, AI-enabled manufacturing and product development, and sustainable solutions that strengthen capabilities, drive operational efficiency, and power next-generation products",
 }
 
@@ -189,6 +198,7 @@ def api_config():
             "id": gid,
             "name": name,
             "category": cat,
+            "display_category": DISPLAY_CATEGORY[cat],
             "vote_options": VOTE_OPTIONS_BY_CATEGORY[cat],
         })
     return jsonify({
@@ -302,6 +312,24 @@ def api_vote():
         if choice not in valid_labels:
             return jsonify({"error": f"Invalid vote choice: {choice}"}), 400
 
+    # Enforce max 4 PRFAQ selections per judge
+    if "PRFAQ" in vote_choices:
+        db = get_db()
+        rows = db.execute(
+            "SELECT group_id, vote_choice FROM votes WHERE judge = ? AND group_id != ?",
+            (judge, group_id),
+        ).fetchall()
+        prfaq_count = 0
+        for r in rows:
+            try:
+                choices = json_mod.loads(r["vote_choice"])
+            except (json_mod.JSONDecodeError, TypeError):
+                choices = [r["vote_choice"]]
+            if "PRFAQ" in choices:
+                prfaq_count += 1
+        if prfaq_count >= 4:
+            return jsonify({"error": "You can only select PRFAQ for up to 4 groups"}), 400
+
     vote_json = json_mod.dumps(vote_choices)
     db = get_db()
     db.execute("""
@@ -360,22 +388,34 @@ def api_results():
     categories_order = []
     cat_groups = {}
     for gid, name, cat in GROUPS:
-        if cat not in cat_groups:
-            cat_groups[cat] = []
-            categories_order.append(cat)
+        dcat = DISPLAY_CATEGORY[cat]
+        if dcat not in cat_groups:
+            cat_groups[dcat] = []
+            categories_order.append(dcat)
         vote_counts = tallies.get(gid, {})
         total_votes = sum(vote_counts.values())
-        cat_groups[cat].append({
+        cat_groups[dcat].append({
             "group_id": gid,
             "name": name,
-            "category": cat,
+            "category": dcat,
+            "original_category": cat,
             "votes": vote_counts,
             "total_votes": total_votes,
             "judge_count": judge_counts.get(gid, 0),
         })
 
+    # Collect all unique option labels across sub-categories for each display category
+    display_cat_options = {}
+    for cat_key, opts in VOTE_OPTIONS_BY_CATEGORY.items():
+        dcat = DISPLAY_CATEGORY[cat_key]
+        if dcat not in display_cat_options:
+            display_cat_options[dcat] = []
+        for opt in opts:
+            if opt["label"] not in display_cat_options[dcat]:
+                display_cat_options[dcat].append(opt["label"])
+
     for cat in categories_order:
-        option_labels = [opt["label"] for opt in VOTE_OPTIONS_BY_CATEGORY[cat]]
+        option_labels = display_cat_options.get(cat, [])
         groups = sorted(cat_groups[cat], key=lambda x: x["total_votes"], reverse=True)
         results.append({
             "category": cat,
