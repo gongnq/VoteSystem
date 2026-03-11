@@ -34,7 +34,7 @@ input, select { font-family: inherit; font-size: inherit; }
 .container { max-width: 100%; margin: 0 auto; padding: 10px 16px; }
 .header { display: flex; justify-content: space-between; align-items: center;
   padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
-.header h1 { font-size: 1.2rem; font-weight: 700; }
+.header h1 { font-size: 1.5rem; font-weight: 700; }
 .header-actions { display: flex; gap: 10px; align-items: center; }
 .btn { padding: 8px 16px; border: none; border-radius: var(--radius-sm);
   font-weight: 600; font-size: 0.85rem; transition: all .15s; }
@@ -46,7 +46,7 @@ input, select { font-family: inherit; font-size: inherit; }
 /* ===== LOGIN ===== */
 .login-card { max-width: 480px; margin: 60px auto; background: var(--surface);
   border-radius: var(--radius); padding: 44px 40px; border: 1px solid var(--border); }
-.login-card h2 { text-align: center; margin-bottom: 10px; font-size: 1.8rem; }
+.login-card h2 { text-align: center; margin-bottom: 10px; font-size: 2rem; }
 .login-card p { text-align: center; color: var(--text2); margin-bottom: 30px; font-size: 1rem; }
 .login-card select { width: 100%; padding: 16px; background: var(--surface2);
   border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
@@ -62,16 +62,17 @@ input, select { font-family: inherit; font-size: inherit; }
   border-radius: 3px; transition: width .3s ease; }
 
 /* ===== MAIN LAYOUT: grid left 2/3 + scan right 1/3 ===== */
-.main-layout { display: flex; gap: 16px; min-height: calc(100vh - 110px); }
+.main-layout { display: flex; gap: 16px; height: calc(100vh - 110px); }
 .scan-col { display: flex; flex-direction: column; align-items: center; justify-content: center;
-  width: 33%; flex-shrink: 0; order: 2; }
+  width: 33%; flex-shrink: 0; order: 2;
+  background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
 .grid-col { flex: 1; overflow-y: auto; order: 1; }
 
 /* ===== SCAN BUTTON ===== */
 .btn-scan { padding: 48px 40px; font-size: 1.6rem; border: none; border-radius: 20px;
   background: linear-gradient(135deg, var(--primary), #a29bfe); color: #fff;
   font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 16px;
-  box-shadow: 0 6px 30px rgba(108,92,231,.4); transition: all .2s; width: 100%; }
+  box-shadow: 0 6px 30px rgba(108,92,231,.4); transition: all .2s; width: 85%; }
 .btn-scan:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(108,92,231,.5); }
 .btn-scan svg { width: 80px; height: 80px; }
 .scan-hint { color: var(--text2); font-size: 0.8rem; margin-top: 8px; text-align: center; }
@@ -99,10 +100,10 @@ input, select { font-family: inherit; font-size: inherit; }
 
 /* ===== VOTING PANEL (full-screen overlay) ===== */
 .voting-panel { position: fixed; inset: 0; background: var(--bg); z-index: 100;
-  display: flex; flex-direction: column; padding: 20px 32px; overflow-y: auto; }
+  display: flex; flex-direction: column; padding: 20px 32px; overflow: hidden; }
 .voting-header { display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 28px; flex-shrink: 0; }
-.voting-header h3 { font-size: 1.8rem; font-weight: 700;
+  margin-bottom: 20px; flex-shrink: 0; }
+.voting-header h3 { font-size: 1.4rem; font-weight: 700;
   background: linear-gradient(135deg, var(--primary), #a29bfe);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text; }
@@ -111,8 +112,8 @@ input, select { font-family: inherit; font-size: inherit; }
   font-weight: 600; transition: all .15s; }
 .btn-close-vote:hover { border-color: var(--text); color: #fff; }
 .vote-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
-  flex: 1; margin-bottom: 20px; }
-.vote-option-btn { aspect-ratio: 1; border: 2px solid var(--border); border-radius: 16px;
+  flex: 1; margin-bottom: 16px; min-height: 0; }
+.vote-option-btn { border: 2px solid var(--border); border-radius: 16px;
   background: var(--surface2); color: var(--text); font-size: 2rem; font-weight: 700;
   transition: all .2s; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -183,18 +184,18 @@ input, select { font-family: inherit; font-size: inherit; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
-  .main-layout { flex-direction: column; min-height: auto; }
-  .scan-col { width: auto; order: 1; }
+  .main-layout { flex-direction: column; height: auto; }
+  .scan-col { width: auto; order: 1; background: none; border: none; padding: 12px 0; }
   .grid-col { order: 2; }
-  .btn-scan { padding: 28px 24px; font-size: 1.1rem; }
+  .btn-scan { padding: 28px 24px; font-size: 1.1rem; width: 100%; }
   .btn-scan svg { width: 48px; height: 48px; }
   .group-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .group-card { padding: 8px; min-height: 56px; }
   .group-name { font-size: 0.68rem; }
-  .vote-option-btn { font-size: 1.2rem; aspect-ratio: auto; padding: 24px 16px; }
+  .vote-option-btn { font-size: 1.2rem; padding: 24px 16px; }
   .vote-options { gap: 10px; }
-  .voting-header h3 { font-size: 1.3rem; }
-  .voting-header { margin-bottom: 16px; }
+  .voting-header h3 { font-size: 1.1rem; }
+  .voting-header { margin-bottom: 12px; }
   .btn-close-vote { padding: 8px 18px; font-size: 0.85rem; }
 }
 
@@ -203,27 +204,29 @@ input, select { font-family: inherit; font-size: inherit; }
   .group-name { font-size: 0.8rem; }
   .group-card { padding: 14px; min-height: 80px; }
   .vote-option-btn { font-size: 2.4rem; }
-  .voting-header h3 { font-size: 2.4rem; }
-  .voting-header { margin-bottom: 32px; }
+  .voting-header h3 { font-size: 1.6rem; }
+  .voting-header { margin-bottom: 24px; }
   .btn-close-vote { padding: 14px 32px; font-size: 1.05rem; }
 }
 
 @media (min-width: 768px) and (orientation: landscape) {
   .container { padding: 8px 20px; }
-  .header { padding: 6px 0; margin-bottom: 6px; }
-  .progress-wrap { margin-bottom: 6px; }
+  .header { padding: 4px 0; margin-bottom: 4px; }
+  .progress-wrap { margin-bottom: 4px; }
+  .main-layout { height: calc(100vh - 90px); }
   .scan-col { width: 30%; }
-  .btn-scan { padding: 52px 44px; font-size: 1.7rem; }
-  .btn-scan svg { width: 96px; height: 96px; }
-  .group-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;
-    max-height: calc(100vh - 120px); overflow-y: auto; }
-  .group-card { min-height: 70px; }
-  .voting-panel { padding: 24px 48px; }
-  .voting-header { margin-bottom: 36px; }
-  .voting-header h3 { font-size: 2.8rem; }
-  .vote-options { gap: 28px; max-width: 960px; margin: 0 auto; flex: 1; }
-  .vote-option-btn { font-size: 2.8rem; }
-  .btn-close-vote { padding: 16px 36px; font-size: 1.1rem; }
+  .btn-scan { padding: 60px 44px; font-size: 1.8rem; border-radius: 24px; }
+  .btn-scan svg { width: 100px; height: 100px; }
+  .group-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+  .group-card { min-height: 54px; padding: 8px 10px; }
+  .group-name { font-size: 0.72rem; }
+  .voting-panel { padding: 16px 48px; }
+  .voting-header { margin-bottom: 16px; }
+  .voting-header h3 { font-size: 1.8rem; }
+  .vote-options { gap: 28px; max-width: 960px; margin: 0 auto; flex: 1; min-height: 0; }
+  .vote-option-btn { font-size: 2.6rem; }
+  .btn-close-vote { padding: 14px 36px; font-size: 1.05rem; }
+  .submit-row .btn { padding: 12px 48px; font-size: 1rem; }
 }
 
 @media print {
