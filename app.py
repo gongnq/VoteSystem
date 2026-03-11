@@ -41,9 +41,18 @@ GROUPS = (
 # VOTE OPTIONS per category — judge picks exactly one per group
 # ---------------------------------------------------------------------------
 VOTE_OPTIONS_BY_CATEGORY = {
-    "NPI": ["PRFAQ", "PRE-ORDER", "Explore"],
-    "NTI": ["HIGH Risk/High Reward", "Competitive Edge", "No"],
-    "AI":  ["PRFAQ", "PRE-ORDER", "Explore"],
+    "NPI": ["PRFAQ", "PRE-ORDER", "Likeability"],
+    "NTI": ["Product Concept", "Velocity", "Likeability"],
+    "AI":  ["PRFAQ", "PRE-ORDER", "Likeability"],
+}
+
+# ---------------------------------------------------------------------------
+# CATEGORY DESCRIPTIONS — shown on the vote page above the options
+# ---------------------------------------------------------------------------
+CATEGORY_DESCRIPTIONS = {
+    "NPI": "New Product Concepts: Customer-facing innovations that address unmet market needs, driving new revenue streams through differentiated design and user experience",
+    "NTI": "New Innovation Pipeline: Core technology, AI-enabled manufacturing and product development, and sustainable solutions that strengthen capabilities, drive operational efficiency, and power next-generation products",
+    "AI":  "AI & Automation: AI-enabled solutions driving operational efficiency and intelligent automation",
 }
 
 # ---------------------------------------------------------------------------
@@ -166,7 +175,11 @@ def api_config():
             "category": cat,
             "vote_options": VOTE_OPTIONS_BY_CATEGORY[cat],
         })
-    return jsonify({"judges": JUDGES, "groups": group_list})
+    return jsonify({
+        "judges": JUDGES,
+        "groups": group_list,
+        "category_descriptions": CATEGORY_DESCRIPTIONS,
+    })
 
 
 @app.route("/api/judge/lock", methods=["POST"])
