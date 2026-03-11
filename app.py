@@ -1,10 +1,11 @@
 # ============================================================================
 # CONFIGURATION GUIDE
 # ============================================================================
-# 1. JUDGE NAMES (line ~30): Change the JUDGES list.
-# 2. GROUP NAMES (line ~35): Each entry is (group_id, display_name, category).
-# 3. VOTE OPTIONS (line ~50): Words shown per category. Judge picks one.
-# 4. ADMIN PIN (line ~60): Set via ADMIN_PIN env var, defaults to "2026".
+# 1. JUDGE NAMES (line ~20): Change the JUDGES list.
+# 2. GROUP NAMES (line ~25): Each entry is (group_id, display_name, category).
+#    Change category to "NPI" or "NTI" once decided.
+# 3. VOTE OPTIONS (line ~55): Words shown per category.
+# 4. ADMIN PIN (line ~70): Set via ADMIN_PIN env var, defaults to "2026".
 # ============================================================================
 
 import os
@@ -22,24 +23,34 @@ JUDGES = ["Rob", "Regien", "Adam", "Amit", "Alok", "Prasad", "Volker", "Toby", "
 
 # ---------------------------------------------------------------------------
 # GROUPS — (id, display_name, category)
+# Category is "NPI" or "NTI". Change as needed once decided.
 # ---------------------------------------------------------------------------
-GROUPS = (
-    [("NTI-1", "1. An Inner Spider Speaker Construction", "NTI"),
-     ("NTI-2", "2. Edge to Edge Display Cover Lens", "NTI"),
-     ("NTI-3", "3. BOBArtender - AI-Powered Bubble Tea", "NTI")]
-    + [("NPI-1", "4. Echo Frames Reimagined", "NPI"),
-       ("NPI-2", "5. Alexa UI Plus - Fire TV Smart Scene", "NPI"),
-       ("NPI-3", "6. Pulse ID", "NPI")]
-    + [("AI-1", "7. Stratos", "AI"),
-       ("AI-2", "8. Multi-Modal Competitive Intelligence", "AI"),
-       ("AI-3", "9. Hercules: Cloud-based AI/ML Platform", "AI"),
-       ("AI-4", "10. Manufacturing Smart Assistant", "AI"),
-       ("AI-5", "11. Intelligent Quality: AI Battery Mfg", "AI")]
-)
+GROUPS = [
+    ("G-1",  "1. An Inner Spider Speaker Construction for Full Range", "NPI"),
+    ("G-2",  "2. Edge to Edge Display Cover Lens", "NPI"),
+    ("G-3",  "3. BOBArtender - AI-Powered Bubble Tea Generation", "NPI"),
+    ("G-4",  "4. The Family AI Cinema Butler", "NPI"),
+    ("G-5",  "5. Echo Frames Reimagined", "NPI"),
+    ("G-6",  "6. Alexa UI Plus - Fire TV Smart Scene Analysis", "NPI"),
+    ("G-7",  "7. Pulse ID", "NPI"),
+    ("G-8",  "8. Re-imagined Wireless Charging for Metal Cover Devices", "NPI"),
+    ("G-9",  "9. Stratos", "NPI"),
+    ("G-10", "10. Multi-Modal Competitive Intelligence AI Agent", "NPI"),
+    ("G-11", "11. Hercules: A Cloud-based AI/ML Platform", "NPI"),
+    ("G-12", "12. Manufacturing Smart Assistant", "NPI"),
+    ("G-13", "13. Intelligent Quality: AI-Powered Battery Mfg at Scale", "NPI"),
+    ("G-14", "14. Green Design 1", "NPI"),
+    ("G-15", "15. Green Design 2: Recyclable PCB Substrate & Additive Mfg", "NPI"),
+    ("G-16", "16. Story Pal: AI Plush Multilingual Stories to Life", "NPI"),
+    ("G-17", "17. AI Multimodal E-commerce Product Shooting Camera", "NPI"),
+    ("G-18", "18. AI Vision Mate Glasses - Second Sight", "NPI"),
+    ("G-19", "19. Detachable Flip Camera 360 for Echo Show Devices", "NPI"),
+    ("G-20", "20. Smart Necklace: AI-Powered Personal Assistant", "NPI"),
+    ("G-21", "21. Chroma Mirror: The AI Stylist", "NPI"),
+]
 
 # ---------------------------------------------------------------------------
 # VOTE OPTIONS per category — judge can select multiple per group
-# Each option: {"label": "...", "subtitle": "..."} or just {"label": "..."}
 # ---------------------------------------------------------------------------
 VOTE_OPTIONS_BY_CATEGORY = {
     "NPI": [
@@ -52,11 +63,6 @@ VOTE_OPTIONS_BY_CATEGORY = {
         {"label": "Accelerator"},
         {"label": "Think Big"},
     ],
-    "AI": [
-        {"label": "PRFAQ", "subtitle": "(Product Maker)"},
-        {"label": "PRE-ORDER"},
-        {"label": "Customer Delight"},
-    ],
 }
 
 # ---------------------------------------------------------------------------
@@ -65,7 +71,6 @@ VOTE_OPTIONS_BY_CATEGORY = {
 CATEGORY_DESCRIPTIONS = {
     "NPI": "New Product Concepts: Customer-facing innovations that address unmet market needs, driving new revenue streams through differentiated design and user experience",
     "NTI": "New Innovation Pipeline: Core technology, AI-enabled manufacturing and product development, and sustainable solutions that strengthen capabilities, drive operational efficiency, and power next-generation products",
-    "AI":  "AI & Automation: AI-enabled solutions driving operational efficiency and intelligent automation",
 }
 
 # ---------------------------------------------------------------------------
@@ -98,8 +103,6 @@ def close_db(exception):
 
 def init_db():
     db = sqlite3.connect(DATABASE)
-
-    # Migrate from old schema (c1/c2/c3) to new (vote_choice) if needed
     cursor = db.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='votes'"
     )
@@ -192,9 +195,6 @@ def api_config():
         "judges": JUDGES,
         "groups": group_list,
         "category_descriptions": CATEGORY_DESCRIPTIONS,
-        "vote_options_by_category": {
-            cat: opts for cat, opts in VOTE_OPTIONS_BY_CATEGORY.items()
-        },
     })
 
 
@@ -339,7 +339,6 @@ def api_results():
     db = get_db()
     rows = db.execute("SELECT group_id, vote_choice FROM votes").fetchall()
 
-    # Tally: for each group, count how many judges selected each option
     tallies = {}
     judge_counts = {}
     for r in rows:

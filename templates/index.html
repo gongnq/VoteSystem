@@ -13,15 +13,13 @@
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-/* ===== RESET & BASE ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --bg: #0f1117; --surface: #1a1d27; --surface2: #242836;
   --border: #2e3348; --text: #e4e6f0; --text2: #8b8fa8;
   --primary: #6c5ce7; --success: #00b894; --warning: #fdcb6e;
-  --danger: #e74c3c;
-  --npi: #0984e3; --nti: #e17055; --ai: #a29bfe;
-  --npi-bg: rgba(9,132,227,.12); --nti-bg: rgba(225,112,85,.12); --ai-bg: rgba(162,155,254,.12);
+  --npi: #0984e3; --nti: #e17055;
+  --npi-bg: rgba(9,132,227,.12); --nti-bg: rgba(225,112,85,.12);
   --radius: 12px; --radius-sm: 8px;
 }
 html { font-size: 16px; }
@@ -29,109 +27,95 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   background: var(--bg); color: var(--text); min-height: 100vh;
   padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 button { cursor: pointer; font-family: inherit; font-size: inherit; }
-input, textarea, select { font-family: inherit; font-size: inherit; }
-
-/* ===== LAYOUT ===== */
-.container { max-width: 960px; margin: 0 auto; padding: 20px; }
+input, select { font-family: inherit; font-size: inherit; }
 .hidden { display: none !important; }
 
-/* ===== HEADER ===== */
+/* ===== LAYOUT ===== */
+.container { max-width: 100%; margin: 0 auto; padding: 10px 16px; }
 .header { display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
-.header h1 { font-size: 1.4rem; font-weight: 700; }
+  padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+.header h1 { font-size: 1.2rem; font-weight: 700; }
 .header-actions { display: flex; gap: 10px; align-items: center; }
-.btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm);
-  font-weight: 600; font-size: 0.9rem; transition: all .15s; }
+.btn { padding: 8px 16px; border: none; border-radius: var(--radius-sm);
+  font-weight: 600; font-size: 0.85rem; transition: all .15s; }
 .btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: #5b4bd5; }
 .btn-outline { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-.btn-outline:hover { border-color: var(--text); color: var(--text); }
-.btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+.btn-sm { padding: 5px 12px; font-size: 0.78rem; }
 .btn-success { background: var(--success); color: #fff; }
-.btn-success:hover { background: #00a383; }
-.btn-danger { background: var(--danger); color: #fff; }
 
 /* ===== LOGIN ===== */
-.login-card { max-width: 540px; margin: 60px auto; background: var(--surface);
-  border-radius: var(--radius); padding: 50px 48px; border: 1px solid var(--border); }
-.login-card h2 { text-align: center; margin-bottom: 12px; font-size: 2rem; }
-.login-card p { text-align: center; color: var(--text2); margin-bottom: 36px; font-size: 1.1rem; }
-.login-card select { width: 100%; padding: 18px; background: var(--surface2);
+.login-card { max-width: 480px; margin: 60px auto; background: var(--surface);
+  border-radius: var(--radius); padding: 44px 40px; border: 1px solid var(--border); }
+.login-card h2 { text-align: center; margin-bottom: 10px; font-size: 1.8rem; }
+.login-card p { text-align: center; color: var(--text2); margin-bottom: 30px; font-size: 1rem; }
+.login-card select { width: 100%; padding: 16px; background: var(--surface2);
   border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
-  font-size: 1.15rem; margin-bottom: 24px; appearance: auto; }
-.login-card .btn { width: 100%; padding: 18px; font-size: 1.15rem; }
+  font-size: 1.1rem; margin-bottom: 20px; appearance: auto; }
+.login-card .btn { width: 100%; padding: 16px; font-size: 1.1rem; }
 
 /* ===== PROGRESS BAR ===== */
-.progress-wrap { margin-bottom: 24px; }
-.progress-label { display: flex; justify-content: space-between; margin-bottom: 6px;
-  font-size: 0.85rem; color: var(--text2); }
-.progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.progress-wrap { margin-bottom: 8px; }
+.progress-label { display: flex; justify-content: space-between; margin-bottom: 4px;
+  font-size: 0.78rem; color: var(--text2); }
+.progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success));
-  border-radius: 4px; transition: width .3s ease; }
+  border-radius: 3px; transition: width .3s ease; }
+
+/* ===== MAIN LAYOUT: scan left + grid right ===== */
+.main-layout { display: flex; gap: 16px; min-height: calc(100vh - 110px); }
+.scan-col { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 200px; flex-shrink: 0; }
+.grid-col { flex: 1; overflow-y: auto; }
 
 /* ===== SCAN BUTTON ===== */
-.scan-section { text-align: center; margin-bottom: 20px; }
-.btn-scan { padding: 56px 64px; font-size: 1.8rem; border: none; border-radius: 24px;
+.btn-scan { padding: 48px 40px; font-size: 1.6rem; border: none; border-radius: 20px;
   background: linear-gradient(135deg, var(--primary), #a29bfe); color: #fff;
-  font-weight: 700; display: inline-flex; flex-direction: column; align-items: center; gap: 20px;
-  box-shadow: 0 8px 36px rgba(108,92,231,.45); transition: all .2s;
-  min-width: 280px; }
-.btn-scan:hover { transform: translateY(-3px); box-shadow: 0 10px 44px rgba(108,92,231,.55); }
-.btn-scan svg { width: 96px; height: 96px; }
-.scan-hint { color: var(--text2); font-size: 0.95rem; margin-top: 14px; }
-
-/* ===== QR READER ===== */
-.qr-reader-wrap { max-width: 400px; margin: 0 auto 24px; position: relative; }
+  font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 16px;
+  box-shadow: 0 6px 30px rgba(108,92,231,.4); transition: all .2s; width: 100%; }
+.btn-scan:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(108,92,231,.5); }
+.btn-scan svg { width: 80px; height: 80px; }
+.scan-hint { color: var(--text2); font-size: 0.8rem; margin-top: 8px; text-align: center; }
+.qr-reader-wrap { width: 100%; margin-top: 12px; position: relative; }
 #qr-reader { width: 100%; border-radius: var(--radius); overflow: hidden; }
-#qr-reader video { border-radius: var(--radius); }
 
-/* ===== GROUP LIST (compact manual fallback) ===== */
-.section-title { font-size: 0.75rem; color: var(--text2); text-transform: uppercase;
-  letter-spacing: .5px; margin-bottom: 8px; font-weight: 600; }
-.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px; }
+/* ===== GROUP GRID ===== */
+.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px; align-content: start; }
 .group-card { background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer;
-  transition: all .15s; display: flex; align-items: center; gap: 8px; }
+  border-radius: var(--radius-sm); padding: 10px; cursor: pointer;
+  transition: all .15s; display: flex; flex-direction: column; gap: 4px;
+  min-height: 60px; justify-content: center; }
 .group-card:hover { border-color: var(--primary); }
 .group-card.scored { border-color: var(--success); background: var(--success); color: #fff; }
-.group-card.scored .badge { background: rgba(255,255,255,.2); color: #fff; }
 .group-card.scored .group-name { color: #fff; }
-.group-card.scored .check-icon { color: #fff; }
+.group-card.scored .badge { background: rgba(255,255,255,.2); color: #fff; }
 .group-card.active { border-color: var(--primary); background: var(--surface2); }
-.badge { padding: 2px 8px; border-radius: 20px; font-size: 0.65rem;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.badge { padding: 2px 6px; border-radius: 12px; font-size: 0.6rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .5px; display: inline-block; align-self: flex-start; }
 .badge-NPI { background: var(--npi-bg); color: var(--npi); }
 .badge-NTI { background: var(--nti-bg); color: var(--nti); }
-.badge-AI  { background: var(--ai-bg); color: var(--ai); }
-.group-info { flex: 1; }
-.group-name { font-weight: 600; font-size: 0.78rem; }
-.check-icon { font-size: 1rem; color: var(--success); }
+.group-name { font-weight: 600; font-size: 0.72rem; line-height: 1.25; }
+.group-card .check-mark { font-size: 0.85rem; }
 
-/* ===== VOTING PANEL (full-width) ===== */
-.voting-panel { background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 28px 32px; margin-top: 16px; text-align: center; }
-.voting-header { display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 12px; text-align: left; }
-.voting-header h3 { font-size: 1.4rem; }
-.voting-cat-desc { color: var(--text2); font-size: 0.88rem; margin-bottom: 20px;
-  text-align: left; line-height: 1.4; }
-.voting-cat-desc strong { color: var(--text); }
-.voting-prompt { color: var(--text2); font-size: 0.9rem; margin-bottom: 20px; }
+/* ===== VOTING PANEL (full-screen overlay) ===== */
+.voting-panel { position: fixed; inset: 0; background: var(--bg); z-index: 100;
+  display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
+.voting-header { display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px; flex-shrink: 0; }
+.voting-header h3 { font-size: 1.8rem; font-weight: 700; }
 .vote-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-  margin-bottom: 28px; }
-.vote-option-btn { aspect-ratio: 1; border: 2px solid var(--border); border-radius: 12px;
+  flex: 1; max-height: 60vh; margin-bottom: 16px; }
+.vote-option-btn { border: 2px solid var(--border); border-radius: 12px;
   background: var(--surface2); color: var(--text); font-size: 2rem; font-weight: 700;
   transition: all .2s; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   text-align: center; padding: 16px; line-height: 1.2; word-break: break-word; }
 .vote-option-btn:hover { border-color: var(--text2); transform: scale(1.02); }
 .vote-option-btn.selected { border-color: #fff; background: #4caf50; color: #fff;
-  box-shadow: 0 0 0 4px rgba(76,175,80,.5), 0 8px 24px rgba(76,175,80,.3); transform: scale(1.04); }
-.vote-option-btn.voted { background: #388e3c; color: #fff; border-color: #fff;
-  box-shadow: 0 0 0 4px var(--success); }
+  box-shadow: 0 0 0 4px rgba(76,175,80,.5), 0 8px 24px rgba(76,175,80,.3); transform: scale(1.03); }
 .option-subtitle { display: block; font-size: 0.5em; font-weight: 400; margin-top: 8px; opacity: .75; }
-.submit-row { display: flex; justify-content: center; gap: 12px; }
-.submit-row .btn { padding: 16px 48px; font-size: 1.1rem; }
+.submit-row { display: flex; justify-content: center; gap: 12px; flex-shrink: 0; }
+.submit-row .btn { padding: 14px 48px; font-size: 1.05rem; }
 
 /* ===== TOAST ===== */
 .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -140,99 +124,93 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .toast.show { opacity: 1; }
 
 /* ===== ADMIN ===== */
-.pin-card { max-width: 380px; margin: 80px auto; background: var(--surface);
-  border-radius: var(--radius); padding: 40px; border: 1px solid var(--border); text-align: center; }
-.pin-card h2 { margin-bottom: 20px; }
+.pin-card { max-width: 360px; margin: 80px auto; background: var(--surface);
+  border-radius: var(--radius); padding: 36px; border: 1px solid var(--border); text-align: center; }
+.pin-card h2 { margin-bottom: 18px; }
 .pin-input { width: 100%; padding: 14px; background: var(--surface2);
   border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
-  text-align: center; font-size: 1.4rem; letter-spacing: 8px; margin-bottom: 20px; }
+  text-align: center; font-size: 1.4rem; letter-spacing: 8px; margin-bottom: 18px; }
 .pin-card .btn { width: 100%; padding: 14px; }
 .pin-error { color: #e74c3c; font-size: 0.85rem; margin-top: 10px; }
-
-/* ===== TABS ===== */
-.tabs { display: flex; gap: 4px; margin-bottom: 24px; overflow-x: auto;
-  border-bottom: 1px solid var(--border); padding-bottom: 0; }
-.tab { padding: 12px 18px; font-weight: 600; color: var(--text2);
+.tabs { display: flex; gap: 4px; margin-bottom: 20px; overflow-x: auto;
+  border-bottom: 1px solid var(--border); }
+.tab { padding: 10px 16px; font-weight: 600; color: var(--text2);
   border: none; background: none; border-bottom: 3px solid transparent;
-  white-space: nowrap; font-size: 0.88rem; transition: all .15s; }
+  white-space: nowrap; font-size: 0.85rem; transition: all .15s; }
 .tab:hover { color: var(--text); }
 .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
 /* ===== RESULTS TABLE ===== */
-.results-section { margin-bottom: 32px; }
 .results-table { width: 100%; border-collapse: collapse; }
-.results-table th { text-align: left; padding: 10px 14px; font-size: 0.8rem;
+.results-table th { text-align: left; padding: 8px 12px; font-size: 0.75rem;
   color: var(--text2); text-transform: uppercase; letter-spacing: .5px;
   border-bottom: 1px solid var(--border); }
-.results-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+.results-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
 .results-table tr:hover td { background: var(--surface2); }
-.results-table .rank { font-weight: 700; color: var(--text2); width: 50px; }
+.results-table .rank { font-weight: 700; color: var(--text2); width: 40px; }
 .results-table .winner td { background: rgba(253,203,110,.08); }
 .results-table .winner .rank { color: var(--warning); }
-.vote-tally { display: flex; gap: 8px; flex-wrap: wrap; }
-.tally-chip { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+.tally-chip { padding: 3px 10px; border-radius: 16px; font-size: 0.78rem; font-weight: 600;
   background: var(--surface2); color: var(--text2); }
 .tally-chip.has-votes { background: rgba(108,92,231,.15); color: var(--primary); }
 
 /* ===== JUDGE GRID ===== */
-.judge-grid-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; margin-top: 32px; }
-.judge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.judge-grid-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; margin-top: 28px; }
+.judge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
 .judge-cell { background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 12px; display: flex;
-  justify-content: space-between; align-items: center; }
-.judge-cell-name { font-weight: 600; font-size: 0.88rem; }
-.judge-cell-count { font-size: 0.82rem; color: var(--text2); }
+  border-radius: var(--radius-sm); padding: 10px; }
+.judge-cell-name { font-weight: 600; font-size: 0.82rem; }
+.judge-cell-count { font-size: 0.78rem; color: var(--text2); }
 .judge-cell-bar { width: 100%; height: 4px; background: var(--surface2);
-  border-radius: 2px; margin-top: 6px; }
+  border-radius: 2px; margin-top: 5px; }
 .judge-cell-fill { height: 100%; background: var(--primary); border-radius: 2px; }
 .judge-cell.complete { border-color: var(--success); }
 .judge-cell.complete .judge-cell-fill { background: var(--success); }
 
 /* ===== QR CODES (admin print) ===== */
-.qr-print-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-.qr-print-card { background: #fff; border-radius: var(--radius); padding: 24px;
+.qr-print-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.qr-print-card { background: #fff; border-radius: var(--radius); padding: 20px;
   text-align: center; color: #000; }
-.qr-print-card h4 { font-size: 0.9rem; margin-bottom: 4px; color: #333; }
-.qr-print-card .qr-cat { font-size: 0.75rem; color: #888; margin-bottom: 12px; }
-.qr-print-card canvas, .qr-print-card img { margin: 0 auto; display: block; }
+.qr-print-card h4 { font-size: 0.82rem; margin-bottom: 4px; color: #333; }
+.qr-print-card .qr-cat { font-size: 0.7rem; color: #888; margin-bottom: 10px; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
-  .container { padding: 12px; }
-  .group-grid { grid-template-columns: repeat(2, 1fr); }
-  .tabs { gap: 0; }
-  .tab { padding: 10px 12px; font-size: 0.8rem; }
-  .header h1 { font-size: 1.1rem; }
-  .vote-option-btn { font-size: 1.3rem; }
-  .btn-scan { padding: 40px 48px; font-size: 1.4rem; }
-  .btn-scan svg { width: 72px; height: 72px; }
+  .main-layout { flex-direction: column; min-height: auto; }
+  .scan-col { min-width: auto; }
+  .btn-scan { padding: 32px 28px; font-size: 1.2rem; }
+  .btn-scan svg { width: 56px; height: 56px; }
+  .group-grid { grid-template-columns: repeat(3, 1fr); }
+  .vote-option-btn { font-size: 1.2rem; }
+  .vote-options { gap: 10px; }
+  .voting-header h3 { font-size: 1.3rem; }
 }
 
 @media (min-width: 768px) {
-  .btn { padding: 14px 24px; font-size: 1rem; }
-  .btn-sm { padding: 10px 18px; font-size: 0.9rem; }
-  .group-grid { grid-template-columns: repeat(4, 1fr); }
+  .scan-col { min-width: 260px; }
+  .group-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .group-name { font-size: 0.78rem; }
   .vote-option-btn { font-size: 2.4rem; }
-  .btn-scan { padding: 64px 72px; font-size: 2.2rem; }
-  .btn-scan svg { width: 120px; height: 120px; }
+  .voting-header h3 { font-size: 2.2rem; }
 }
 
 @media (min-width: 768px) and (orientation: landscape) {
-  .container { max-width: 100%; padding: 12px 24px; }
-  .header { padding: 8px 0; margin-bottom: 8px; }
-  .progress-wrap { margin-bottom: 12px; }
-  .judge-workspace .group-grid { grid-template-columns: repeat(6, 1fr); }
-  .judge-workspace.voting-active .group-grid { display: none; }
-  .judge-workspace.voting-active .scan-section { display: none; }
-  .judge-workspace.voting-active .section-title { display: none; }
-  .voting-panel { padding: 24px 40px; margin-top: 8px; }
-  .vote-options { gap: 28px; max-width: 900px; margin: 0 auto 28px; }
-  .vote-option-btn { font-size: 2.6rem; }
+  .container { padding: 8px 20px; }
+  .header { padding: 6px 0; margin-bottom: 6px; }
+  .progress-wrap { margin-bottom: 6px; }
+  .scan-col { min-width: 280px; }
+  .btn-scan { padding: 56px 48px; font-size: 1.8rem; }
+  .btn-scan svg { width: 100px; height: 100px; }
+  .group-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px;
+    max-height: calc(100vh - 130px); overflow-y: auto; }
+  .vote-options { gap: 24px; max-width: 900px; margin: 0 auto 16px; }
+  .vote-option-btn { font-size: 2.8rem; }
+  .voting-header h3 { font-size: 2.6rem; }
 }
 
 @media print {
   body { background: #fff; color: #000; }
-  .header, .tabs, .judge-grid-title, .judge-grid, .results-section { display: none; }
+  .header, .tabs, .judge-grid-title, .judge-grid, #admin-results { display: none; }
   .qr-print-grid { display: grid !important; }
   .qr-print-card { border: 1px solid #ccc; break-inside: avoid; }
 }
@@ -240,19 +218,18 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 </head>
 <body>
 
-<!-- ===== TOAST ===== -->
 <div class="toast" id="toast"></div>
 
 <!-- ===== LOGIN VIEW ===== -->
 <div id="view-login" class="container">
   <div class="login-card">
     <h2>2026 Asia Demo Crawl</h2>
-    <p>Select your name to begin scoring</p>
+    <p>Select your name to begin voting</p>
     <select id="judge-select">
       <option value="">-- Choose your name --</option>
     </select>
     <button class="btn btn-primary" onclick="loginAsJudge()">Start Voting</button>
-    <div style="text-align:center; margin-top: 20px;">
+    <div style="text-align:center; margin-top: 18px;">
       <button class="btn btn-outline btn-sm" onclick="showAdminLogin()">Admin Dashboard</button>
     </div>
   </div>
@@ -263,59 +240,53 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   <div class="header">
     <h1>2026 Asia Demo Crawl</h1>
     <div class="header-actions">
-      <span id="judge-label" style="color:var(--text2); font-size:0.9rem;"></span>
+      <span id="judge-label" style="color:var(--text2); font-size:0.85rem;"></span>
       <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
     </div>
   </div>
-
   <div class="progress-wrap">
     <div class="progress-label">
       <span>Voting Progress</span>
-      <span id="progress-text">0 / 11</span>
+      <span id="progress-text">0 / 21</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
   </div>
 
-  <div class="judge-workspace" id="judge-workspace">
-    <!-- Scan Button -->
-    <div class="scan-section" id="scan-section">
+  <div class="main-layout" id="main-layout">
+    <!-- Left: Scan -->
+    <div class="scan-col" id="scan-col">
       <button class="btn-scan" id="btn-scan" onclick="toggleScanner()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/>
           <rect x="7" y="7" width="10" height="10" rx="1"/>
         </svg>
-        Scan QR Code
+        Scan QR
       </button>
-      <div class="scan-hint">Scan the QR code at a booth to vote</div>
-    </div>
-
-    <!-- QR Reader (hidden until scan tapped) -->
-    <div class="qr-reader-wrap hidden" id="qr-reader-wrap">
-      <div id="qr-reader"></div>
-      <div style="text-align:center; margin-top:12px;">
-        <button class="btn btn-outline btn-sm" onclick="stopScanner()">Cancel</button>
-      </div>
-    </div>
-
-    <!-- Group Grid (manual selection fallback) -->
-    <div class="section-title" style="margin-top:32px;">Or select manually</div>
-    <div class="group-grid" id="group-grid"></div>
-
-    <!-- Voting Panel -->
-    <div class="voting-panel hidden" id="voting-panel">
-      <div class="voting-header">
-        <div>
-          <h3 id="voting-group-name"></h3>
-          <span class="badge" id="voting-badge"></span>
+      <div class="scan-hint">Scan booth QR to vote</div>
+      <div class="qr-reader-wrap hidden" id="qr-reader-wrap">
+        <div id="qr-reader"></div>
+        <div style="text-align:center; margin-top:8px;">
+          <button class="btn btn-outline btn-sm" onclick="stopScanner()">Cancel</button>
         </div>
-        <button class="btn btn-outline btn-sm" onclick="closeVoting()">Close</button>
-      </div>
-      <div class="voting-cat-desc" id="voting-cat-desc"></div>
-      <div class="vote-options" id="vote-options"></div>
-      <div class="submit-row">
-        <button class="btn btn-success" id="btn-submit-vote" onclick="submitVote()" disabled>Submit Vote</button>
       </div>
     </div>
+
+    <!-- Right: Group Grid -->
+    <div class="grid-col">
+      <div class="group-grid" id="group-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== VOTING PANEL (full-screen overlay) ===== -->
+<div class="voting-panel hidden" id="voting-panel">
+  <div class="voting-header">
+    <h3 id="voting-group-name"></h3>
+    <button class="btn btn-outline btn-sm" onclick="closeVoting()">Close</button>
+  </div>
+  <div class="vote-options" id="vote-options"></div>
+  <div class="submit-row">
+    <button class="btn btn-success" id="btn-submit-vote" onclick="submitVote()" disabled>Submit Vote</button>
   </div>
 </div>
 
@@ -327,7 +298,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
       placeholder="PIN" onkeydown="if(event.key==='Enter')verifyPin()">
     <button class="btn btn-primary" onclick="verifyPin()">Enter</button>
     <div class="pin-error hidden" id="pin-error">Incorrect PIN</div>
-    <div style="margin-top: 16px;">
+    <div style="margin-top: 14px;">
       <button class="btn btn-outline btn-sm" onclick="showLogin()">Back</button>
     </div>
   </div>
@@ -338,19 +309,13 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   <div class="header">
     <h1>Admin Dashboard</h1>
     <div class="header-actions">
-      <span style="color:var(--text2); font-size:0.82rem;" id="refresh-label">Auto-refresh: 5s</span>
+      <span style="color:var(--text2); font-size:0.78rem;">Auto-refresh: 5s</span>
       <button class="btn btn-outline btn-sm" onclick="showLogin()">Exit</button>
     </div>
   </div>
-
   <div class="tabs" id="admin-tabs"></div>
-
-  <!-- Results tab content -->
   <div id="admin-results"></div>
-
-  <!-- QR Codes tab content -->
   <div id="admin-qr-codes" class="hidden"></div>
-
   <div class="judge-grid-title" id="judge-grid-title">Judge Completion</div>
   <div class="judge-grid" id="judge-grid"></div>
 </div>
@@ -367,23 +332,45 @@ let adminRefreshTimer = null;
 let heartbeatTimer = null;
 let qrScanner = null;
 let scannerRunning = false;
-const SESSION_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
-const CAT_COLORS = { NPI: '#0984e3', NTI: '#e17055', AI: '#a29bfe' };
+let qrProcessing = false;
+const SESSION_ID = localStorage.getItem('session_id') || (Math.random().toString(36).slice(2) + Date.now().toString(36));
+localStorage.setItem('session_id', SESSION_ID);
 
 // ===== INIT =====
 async function init() {
   const res = await fetch('/api/config');
   CONFIG = await res.json();
+
+  // Try to restore session from localStorage
+  const saved = localStorage.getItem('judge_name');
+  if (saved && CONFIG.judges.includes(saved)) {
+    const lockRes = await fetch('/api/judge/lock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ judge: saved, session_id: SESSION_ID }),
+    });
+    if (lockRes.ok) {
+      currentJudge = saved;
+      document.getElementById('judge-label').textContent = currentJudge;
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      heartbeatTimer = setInterval(sendHeartbeat, 60000);
+      const vRes = await fetch(`/api/votes/${encodeURIComponent(currentJudge)}`);
+      judgeVotes = await vRes.json();
+      renderGroupGrid();
+      showView('view-judge');
+      return;
+    }
+    localStorage.removeItem('judge_name');
+  }
+
   await populateJudgeSelect();
 }
 
 async function populateJudgeSelect() {
   const sel = document.getElementById('judge-select');
   while (sel.options.length > 1) sel.remove(1);
-
   const lockedRes = await fetch('/api/judge/locked');
   const lockedJudges = await lockedRes.json();
-
   CONFIG.judges.forEach(j => {
     const opt = document.createElement('option');
     opt.value = j;
@@ -400,11 +387,9 @@ function showView(id) {
     document.getElementById(v).classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
   if (id !== 'view-admin' && adminRefreshTimer) {
-    clearInterval(adminRefreshTimer);
-    adminRefreshTimer = null;
+    clearInterval(adminRefreshTimer); adminRefreshTimer = null;
   }
 }
-
 function showLogin() { showView('view-login'); }
 function showAdminLogin() { showView('view-admin-pin'); document.getElementById('pin-input').value = ''; }
 
@@ -413,13 +398,13 @@ async function logout() {
   if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
   if (currentJudge) {
     await fetch('/api/judge/unlock', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ judge: currentJudge, session_id: SESSION_ID }),
     }).catch(() => {});
   }
   currentJudge = null;
   judgeVotes = {};
+  localStorage.removeItem('judge_name');
   showView('view-login');
   await populateJudgeSelect();
 }
@@ -428,10 +413,8 @@ async function logout() {
 async function loginAsJudge() {
   const sel = document.getElementById('judge-select');
   if (!sel.value) return;
-
   const lockRes = await fetch('/api/judge/lock', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ judge: sel.value, session_id: SESSION_ID }),
   });
   if (!lockRes.ok) {
@@ -440,99 +423,63 @@ async function loginAsJudge() {
     await populateJudgeSelect();
     return;
   }
-
   currentJudge = sel.value;
+  localStorage.setItem('judge_name', currentJudge);
   document.getElementById('judge-label').textContent = currentJudge;
-
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = setInterval(sendHeartbeat, 60000);
-
   const res = await fetch(`/api/votes/${encodeURIComponent(currentJudge)}`);
   judgeVotes = await res.json();
-
   renderGroupGrid();
-  closeVoting();
   showView('view-judge');
 }
 
 function sendHeartbeat() {
   if (!currentJudge) return;
   fetch('/api/judge/heartbeat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ judge: currentJudge, session_id: SESSION_ID }),
   }).catch(() => {});
 }
 
 // ===== QR SCANNER =====
-let qrProcessing = false;
-
 function toggleScanner() {
-  if (scannerRunning) {
-    stopScanner();
-  } else {
-    startScanner();
-  }
+  if (scannerRunning) stopScanner(); else startScanner();
 }
 
 function startScanner() {
-  const wrap = document.getElementById('qr-reader-wrap');
-  wrap.classList.remove('hidden');
-  document.getElementById('scan-section').querySelector('.scan-hint').textContent = 'Point camera at QR code...';
-  scannerRunning = true;
-  qrProcessing = false;
-
+  document.getElementById('qr-reader-wrap').classList.remove('hidden');
+  scannerRunning = true; qrProcessing = false;
   qrScanner = new Html5Qrcode("qr-reader");
   qrScanner.start(
     { facingMode: "environment" },
-    { fps: 10, qrbox: { width: 250, height: 250 } },
-    (decodedText) => {
-      if (!qrProcessing) {
-        qrProcessing = true;
-        onQrScanned(decodedText);
-      }
-    },
+    { fps: 10, qrbox: { width: 220, height: 220 } },
+    (text) => { if (!qrProcessing) { qrProcessing = true; onQrScanned(text); } },
     () => {}
-  ).catch(() => {
-    showToast('Camera access denied or not available');
-    stopScanner();
-  });
+  ).catch(() => { showToast('Camera not available'); stopScanner(); });
 }
 
 async function stopScanner() {
   scannerRunning = false;
   document.getElementById('qr-reader-wrap').classList.add('hidden');
-  document.getElementById('scan-section').querySelector('.scan-hint').textContent = 'Scan the QR code at a booth to vote';
   if (qrScanner) {
-    try { await qrScanner.stop(); } catch (e) {}
-    try { qrScanner.clear(); } catch (e) {}
+    try { await qrScanner.stop(); } catch(e) {}
+    try { qrScanner.clear(); } catch(e) {}
     qrScanner = null;
   }
 }
 
 async function onQrScanned(text) {
   await stopScanner();
-
   const cleaned = text.trim();
-  // Try to match group_id directly
   const group = CONFIG.groups.find(g => g.id === cleaned);
-  if (group) {
-    openVoting(group.id);
-    return;
-  }
-
-  // Try extracting group_id from a URL like ?group=NPI-1
+  if (group) { openVoting(group.id); return; }
   const match = cleaned.match(/[?&]group=([^&]+)/);
   if (match) {
-    const gid = decodeURIComponent(match[1]);
-    const g = CONFIG.groups.find(gr => gr.id === gid);
-    if (g) {
-      openVoting(g.id);
-      return;
-    }
+    const g = CONFIG.groups.find(gr => gr.id === decodeURIComponent(match[1]));
+    if (g) { openVoting(g.id); return; }
   }
-
-  showToast('Unknown QR code: ' + cleaned);
+  showToast('Unknown QR: ' + cleaned);
   qrProcessing = false;
 }
 
@@ -541,26 +488,22 @@ function renderGroupGrid() {
   const grid = document.getElementById('group-grid');
   grid.innerHTML = '';
   let scored = 0;
-
   CONFIG.groups.forEach(g => {
     const existing = judgeVotes[g.id];
     const isScored = existing && existing.vote_choices && existing.vote_choices.length > 0;
     if (isScored) scored++;
-
     const card = document.createElement('div');
     card.className = `group-card${isScored ? ' scored' : ''}${currentGroupId === g.id ? ' active' : ''}`;
     card.onclick = () => openVoting(g.id);
     card.innerHTML = `
       <span class="badge badge-${g.category}">${g.category}</span>
-      <div class="group-info"><div class="group-name">${g.name}</div></div>
-      ${isScored ? '<span class="check-icon">&#10003;</span>' : ''}
+      <div class="group-name">${g.name}</div>
+      ${isScored ? '<span class="check-mark">&#10003;</span>' : ''}
     `;
     grid.appendChild(card);
   });
-
   document.getElementById('progress-text').textContent = `${scored} / ${CONFIG.groups.length}`;
-  document.getElementById('progress-fill').style.width =
-    `${(scored / CONFIG.groups.length) * 100}%`;
+  document.getElementById('progress-fill').style.width = `${(scored / CONFIG.groups.length) * 100}%`;
 }
 
 // ===== VOTING =====
@@ -571,13 +514,6 @@ function openVoting(groupId) {
   if (!group) return;
 
   document.getElementById('voting-group-name').textContent = group.name;
-  const badge = document.getElementById('voting-badge');
-  badge.textContent = group.category;
-  badge.className = `badge badge-${group.category}`;
-
-  // Set category description
-  const catDesc = (CONFIG.category_descriptions || {})[group.category] || '';
-  document.getElementById('voting-cat-desc').innerHTML = catDesc;
 
   const optionsContainer = document.getElementById('vote-options');
   optionsContainer.innerHTML = '';
@@ -586,7 +522,6 @@ function openVoting(groupId) {
   const existingChoices = existing ? (existing.vote_choices || []) : [];
   selectedChoices = [...existingChoices];
 
-  // vote_options are now objects with label + optional subtitle
   group.vote_options.forEach(opt => {
     const label = opt.label || opt;
     const subtitle = opt.subtitle || '';
@@ -596,33 +531,18 @@ function openVoting(groupId) {
     btn.innerHTML = subtitle
       ? `${label}<span class="option-subtitle">${subtitle}</span>`
       : label;
-
-    if (existingChoices.includes(label)) {
-      btn.classList.add('selected');
-    }
-
+    if (existingChoices.includes(label)) btn.classList.add('selected');
     btn.onclick = () => toggleOption(label);
     optionsContainer.appendChild(btn);
   });
 
   updateSubmitButton();
   document.getElementById('voting-panel').classList.remove('hidden');
-  document.getElementById('judge-workspace').classList.add('voting-active');
-  renderGroupGrid();
-
-  const isLandscapeTablet = window.innerWidth >= 768 && window.matchMedia('(orientation: landscape)').matches;
-  if (!isLandscapeTablet) {
-    document.getElementById('voting-panel').scrollIntoView({ behavior: 'smooth' });
-  }
 }
 
 function toggleOption(option) {
   const idx = selectedChoices.indexOf(option);
-  if (idx >= 0) {
-    selectedChoices.splice(idx, 1);
-  } else {
-    selectedChoices.push(option);
-  }
+  if (idx >= 0) selectedChoices.splice(idx, 1); else selectedChoices.push(option);
   document.querySelectorAll('.vote-option-btn').forEach(btn => {
     btn.classList.toggle('selected', selectedChoices.includes(btn.dataset.option));
   });
@@ -634,26 +554,17 @@ function updateSubmitButton() {
 }
 
 function closeVoting() {
-  currentGroupId = null;
-  selectedChoices = [];
+  currentGroupId = null; selectedChoices = [];
   document.getElementById('voting-panel').classList.add('hidden');
-  document.getElementById('judge-workspace').classList.remove('voting-active');
   renderGroupGrid();
 }
 
 async function submitVote() {
   if (selectedChoices.length === 0 || !currentGroupId) return;
-
   const res = await fetch('/api/vote', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      judge: currentJudge,
-      group_id: currentGroupId,
-      vote_choices: selectedChoices,
-    }),
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ judge: currentJudge, group_id: currentGroupId, vote_choices: selectedChoices }),
   });
-
   if (res.ok) {
     judgeVotes[currentGroupId] = { vote_choices: [...selectedChoices] };
     showToast('Vote submitted!');
@@ -668,34 +579,25 @@ async function submitVote() {
 async function verifyPin() {
   const pin = document.getElementById('pin-input').value;
   const res = await fetch('/api/admin/verify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ pin }),
   });
   if (res.ok) {
-    showView('view-admin');
-    renderAdminTabs();
-    loadAdminData();
+    showView('view-admin'); renderAdminTabs(); loadAdminData();
     adminRefreshTimer = setInterval(loadAdminData, 5000);
-  } else {
-    document.getElementById('pin-error').classList.remove('hidden');
-  }
+  } else { document.getElementById('pin-error').classList.remove('hidden'); }
 }
 
-// Admin tabs: one per category + QR Codes
 function getAdminTabNames() {
   const cats = [];
-  CONFIG.groups.forEach(g => {
-    if (!cats.includes(g.category)) cats.push(g.category);
-  });
+  CONFIG.groups.forEach(g => { if (!cats.includes(g.category)) cats.push(g.category); });
   return [...cats, 'QR Codes'];
 }
 
 function renderAdminTabs() {
   const container = document.getElementById('admin-tabs');
   container.innerHTML = '';
-  const tabNames = getAdminTabNames();
-  tabNames.forEach((name, i) => {
+  getAdminTabNames().forEach((name, i) => {
     const tab = document.createElement('button');
     tab.className = `tab${i === activeAdminTab ? ' active' : ''}`;
     tab.textContent = name;
@@ -713,8 +615,7 @@ async function loadAdminData() {
     document.getElementById('admin-qr-codes').classList.remove('hidden');
     document.getElementById('judge-grid-title').classList.add('hidden');
     document.getElementById('judge-grid').classList.add('hidden');
-    renderQrCodes();
-    return;
+    renderQrCodes(); return;
   }
 
   document.getElementById('admin-results').classList.remove('hidden');
@@ -722,13 +623,9 @@ async function loadAdminData() {
   document.getElementById('judge-grid-title').classList.remove('hidden');
   document.getElementById('judge-grid').classList.remove('hidden');
 
-  const [resultsRes, progressRes] = await Promise.all([
-    fetch('/api/results'), fetch('/api/progress')
-  ]);
+  const [resultsRes, progressRes] = await Promise.all([fetch('/api/results'), fetch('/api/progress')]);
   const results = await resultsRes.json();
   const progress = await progressRes.json();
-
-  // Find the category result matching current tab
   const catResult = results.find(r => r.category === currentTab);
   renderResults(catResult);
   renderJudgeGrid(progress);
@@ -737,31 +634,24 @@ async function loadAdminData() {
 function renderResults(catResult) {
   const container = document.getElementById('admin-results');
   if (!catResult || !catResult.groups.length) {
-    container.innerHTML = '<p style="color:var(--text2);">No data yet.</p>';
-    return;
+    container.innerHTML = '<p style="color:var(--text2);">No data yet.</p>'; return;
   }
-
   const options = catResult.vote_options || [];
-  let html = `<div class="results-section">
-    <table class="results-table">
-    <thead><tr>
-      <th>Rank</th><th>Group</th>`;
+  let html = `<table class="results-table"><thead><tr><th>Rank</th><th>Group</th>`;
   options.forEach(opt => { html += `<th>${opt}</th>`; });
-  html += `<th>Total</th></tr></thead><tbody>`;
-
+  html += `<th>Total</th><th>Judges</th></tr></thead><tbody>`;
   catResult.groups.forEach((g, i) => {
     const isWinner = i === 0 && g.total_votes > 0;
     html += `<tr class="${isWinner ? 'winner' : ''}">
-      <td class="rank">${isWinner ? '\u{1F3C6}' : i + 1}</td>
-      <td>${g.name}</td>`;
+      <td class="rank">${isWinner ? '\u{1F3C6}' : i + 1}</td><td>${g.name}</td>`;
     options.forEach(opt => {
       const count = g.votes[opt] || 0;
       html += `<td><span class="tally-chip${count > 0 ? ' has-votes' : ''}">${count}</span></td>`;
     });
-    html += `<td style="font-weight:700;">${g.total_votes}</td></tr>`;
+    html += `<td style="font-weight:700;">${g.total_votes}</td>
+      <td style="color:var(--text2);font-size:0.82rem;">${g.judge_count}</td></tr>`;
   });
-
-  html += '</tbody></table></div>';
+  html += '</tbody></table>';
   container.innerHTML = html;
 }
 
@@ -771,64 +661,39 @@ function renderJudgeGrid(progress) {
   CONFIG.judges.forEach(j => {
     const p = progress[j] || { completed: 0, total: CONFIG.groups.length };
     const pct = (p.completed / p.total) * 100;
-    const isComplete = p.completed === p.total;
     const cell = document.createElement('div');
-    cell.className = `judge-cell${isComplete ? ' complete' : ''}`;
-    cell.innerHTML = `
-      <div style="flex:1;">
-        <div style="display:flex;justify-content:space-between;">
-          <span class="judge-cell-name">${j}</span>
-          <span class="judge-cell-count">${p.completed}/${p.total}</span>
-        </div>
-        <div class="judge-cell-bar"><div class="judge-cell-fill" style="width:${pct}%"></div></div>
+    cell.className = `judge-cell${p.completed === p.total ? ' complete' : ''}`;
+    cell.innerHTML = `<div style="flex:1;">
+      <div style="display:flex;justify-content:space-between;">
+        <span class="judge-cell-name">${j}</span>
+        <span class="judge-cell-count">${p.completed}/${p.total}</span>
       </div>
-    `;
+      <div class="judge-cell-bar"><div class="judge-cell-fill" style="width:${pct}%"></div></div>
+    </div>`;
     container.appendChild(cell);
   });
 }
 
-// ===== QR CODE GENERATION (Admin) =====
 function renderQrCodes() {
   const container = document.getElementById('admin-qr-codes');
-  container.innerHTML = '<p style="color:var(--text2);margin-bottom:16px;">Print these QR codes and place them at each booth. Each code contains the group ID.</p>';
-
+  container.innerHTML = '<p style="color:var(--text2);margin-bottom:12px;">Print QR codes for each booth.</p>';
   const grid = document.createElement('div');
   grid.className = 'qr-print-grid';
-
   CONFIG.groups.forEach(g => {
     const card = document.createElement('div');
     card.className = 'qr-print-card';
-    card.innerHTML = `
-      <h4>${g.name}</h4>
-      <div class="qr-cat">${g.category} | ID: ${g.id}</div>
-      <div id="qr-${g.id}"></div>
-    `;
+    card.innerHTML = `<h4>${g.name}</h4><div class="qr-cat">${g.category} | ${g.id}</div><div id="qr-${g.id}"></div>`;
     grid.appendChild(card);
   });
-
   container.appendChild(grid);
-
-  const printBtn = document.createElement('button');
-  printBtn.className = 'btn btn-primary';
-  printBtn.style.marginTop = '20px';
-  printBtn.textContent = 'Print QR Codes';
-  printBtn.onclick = () => window.print();
-  container.appendChild(printBtn);
-
-  // Generate QR codes after DOM update
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-primary'; btn.style.marginTop = '16px';
+  btn.textContent = 'Print QR Codes'; btn.onclick = () => window.print();
+  container.appendChild(btn);
   requestAnimationFrame(() => {
     CONFIG.groups.forEach(g => {
       const el = document.getElementById(`qr-${g.id}`);
-      if (el) {
-        new QRCode(el, {
-          text: g.id,
-          width: 160,
-          height: 160,
-          colorDark: '#000000',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.M,
-        });
-      }
+      if (el) new QRCode(el, { text: g.id, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
     });
   });
 }
@@ -836,12 +701,11 @@ function renderQrCodes() {
 // ===== TOAST =====
 function showToast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2000);
 }
 
-// ===== PAGE UNLOAD: release lock =====
+// ===== PAGE UNLOAD =====
 window.addEventListener('beforeunload', () => {
   if (currentJudge) {
     navigator.sendBeacon('/api/judge/unlock',
@@ -851,9 +715,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ===== PWA =====
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
-}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 
 // ===== START =====
 init();
