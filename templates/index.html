@@ -128,6 +128,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   box-shadow: 0 0 0 4px var(--primary), 0 8px 24px rgba(76,175,80,.4); transform: scale(1.04); }
 .vote-option-btn.voted { background: #388e3c; border-color: #fff;
   box-shadow: 0 0 0 4px var(--success); }
+.option-subtitle { display: block; font-size: 0.6em; font-weight: 400; margin-top: 4px; opacity: .8; }
 .submit-row { display: flex; justify-content: center; gap: 12px; }
 .submit-row .btn { padding: 16px 48px; font-size: 1.1rem; }
 
@@ -358,7 +359,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 let CONFIG = { judges: [], groups: [] };
 let currentJudge = null;
 let currentGroupId = null;
-let selectedChoice = null;
+let selectedChoices = [];
 let judgeVotes = {};
 let activeAdminTab = 0;
 let adminRefreshTimer = null;
@@ -541,7 +542,8 @@ function renderGroupGrid() {
   let scored = 0;
 
   CONFIG.groups.forEach(g => {
-    const isScored = !!judgeVotes[g.id];
+    const existing = judgeVotes[g.id];
+    const isScored = existing && existing.vote_choices && existing.vote_choices.length > 0;
     if (isScored) scored++;
 
     const card = document.createElement('div');
@@ -563,7 +565,7 @@ function renderGroupGrid() {
 // ===== VOTING =====
 function openVoting(groupId) {
   currentGroupId = groupId;
-  selectedChoice = null;
+  selectedChoices = [];
   const group = CONFIG.groups.find(g => g.id === groupId);
   if (!group) return;
 
@@ -580,19 +582,25 @@ function openVoting(groupId) {
   optionsContainer.innerHTML = '';
 
   const existing = judgeVotes[groupId];
+  const existingChoices = existing ? (existing.vote_choices || []) : [];
+  selectedChoices = [...existingChoices];
 
-  group.vote_options.forEach(option => {
+  // vote_options are now objects with label + optional subtitle
+  group.vote_options.forEach(opt => {
+    const label = opt.label || opt;
+    const subtitle = opt.subtitle || '';
     const btn = document.createElement('button');
     btn.className = 'vote-option-btn';
-    btn.textContent = option;
-    btn.dataset.option = option;
+    btn.dataset.option = label;
+    btn.innerHTML = subtitle
+      ? `${label}<span class="option-subtitle">${subtitle}</span>`
+      : label;
 
-    if (existing && existing.vote_choice === option) {
-      btn.classList.add('voted');
-      selectedChoice = option;
+    if (existingChoices.includes(label)) {
+      btn.classList.add('selected');
     }
 
-    btn.onclick = () => selectOption(option);
+    btn.onclick = () => toggleOption(label);
     optionsContainer.appendChild(btn);
   });
 
@@ -607,31 +615,33 @@ function openVoting(groupId) {
   }
 }
 
-function selectOption(option) {
-  selectedChoice = option;
+function toggleOption(option) {
+  const idx = selectedChoices.indexOf(option);
+  if (idx >= 0) {
+    selectedChoices.splice(idx, 1);
+  } else {
+    selectedChoices.push(option);
+  }
   document.querySelectorAll('.vote-option-btn').forEach(btn => {
-    btn.classList.remove('selected', 'voted');
-    if (btn.dataset.option === option) {
-      btn.classList.add('selected');
-    }
+    btn.classList.toggle('selected', selectedChoices.includes(btn.dataset.option));
   });
   updateSubmitButton();
 }
 
 function updateSubmitButton() {
-  document.getElementById('btn-submit-vote').disabled = !selectedChoice;
+  document.getElementById('btn-submit-vote').disabled = selectedChoices.length === 0;
 }
 
 function closeVoting() {
   currentGroupId = null;
-  selectedChoice = null;
+  selectedChoices = [];
   document.getElementById('voting-panel').classList.add('hidden');
   document.getElementById('judge-workspace').classList.remove('voting-active');
   renderGroupGrid();
 }
 
 async function submitVote() {
-  if (!selectedChoice || !currentGroupId) return;
+  if (selectedChoices.length === 0 || !currentGroupId) return;
 
   const res = await fetch('/api/vote', {
     method: 'POST',
@@ -639,12 +649,12 @@ async function submitVote() {
     body: JSON.stringify({
       judge: currentJudge,
       group_id: currentGroupId,
-      vote_choice: selectedChoice,
+      vote_choices: selectedChoices,
     }),
   });
 
   if (res.ok) {
-    judgeVotes[currentGroupId] = { vote_choice: selectedChoice };
+    judgeVotes[currentGroupId] = { vote_choices: [...selectedChoices] };
     showToast('Vote submitted!');
     closeVoting();
   } else {

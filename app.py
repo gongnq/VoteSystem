@@ -38,12 +38,25 @@ GROUPS = (
 )
 
 # ---------------------------------------------------------------------------
-# VOTE OPTIONS per category — judge picks exactly one per group
+# VOTE OPTIONS per category — judge can select multiple per group
+# Each option: {"label": "...", "subtitle": "..."} or just {"label": "..."}
 # ---------------------------------------------------------------------------
 VOTE_OPTIONS_BY_CATEGORY = {
-    "NPI": ["PRFAQ", "PRE-ORDER", "Likeability"],
-    "NTI": ["Product Concept", "Velocity", "Likeability"],
-    "AI":  ["PRFAQ", "PRE-ORDER", "Likeability"],
+    "NPI": [
+        {"label": "PRFAQ", "subtitle": "(Product Maker)"},
+        {"label": "PRE-ORDER"},
+        {"label": "Customer Delight"},
+    ],
+    "NTI": [
+        {"label": "Product Concept"},
+        {"label": "Accelerator"},
+        {"label": "Think Big"},
+    ],
+    "AI": [
+        {"label": "PRFAQ", "subtitle": "(Product Maker)"},
+        {"label": "PRE-ORDER"},
+        {"label": "Customer Delight"},
+    ],
 }
 
 # ---------------------------------------------------------------------------
@@ -179,6 +192,9 @@ def api_config():
         "judges": JUDGES,
         "groups": group_list,
         "category_descriptions": CATEGORY_DESCRIPTIONS,
+        "vote_options_by_category": {
+            cat: opts for cat, opts in VOTE_OPTIONS_BY_CATEGORY.items()
+        },
     })
 
 
@@ -265,7 +281,7 @@ def api_vote():
     data = request.get_json(force=True)
     judge = data.get("judge", "").strip()
     group_id = data.get("group_id", "").strip()
-    vote_choice = data.get("vote_choice", "").strip()
+    vote_choices = data.get("vote_choices", [])
 
     if judge not in JUDGES:
         return jsonify({"error": "Invalid judge"}), 400
@@ -278,17 +294,22 @@ def api_vote():
     if not group_info:
         return jsonify({"error": "Invalid group"}), 400
 
-    valid_options = VOTE_OPTIONS_BY_CATEGORY[group_info[2]]
-    if vote_choice not in valid_options:
-        return jsonify({"error": "Invalid vote choice"}), 400
+    if not isinstance(vote_choices, list) or len(vote_choices) == 0:
+        return jsonify({"error": "Select at least one option"}), 400
 
+    valid_labels = {opt["label"] for opt in VOTE_OPTIONS_BY_CATEGORY[group_info[2]]}
+    for choice in vote_choices:
+        if choice not in valid_labels:
+            return jsonify({"error": f"Invalid vote choice: {choice}"}), 400
+
+    vote_json = json_mod.dumps(vote_choices)
     db = get_db()
     db.execute("""
         INSERT INTO votes (judge, group_id, vote_choice, updated_at)
         VALUES (?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(judge, group_id)
         DO UPDATE SET vote_choice=excluded.vote_choice, updated_at=CURRENT_TIMESTAMP
-    """, (judge, group_id, vote_choice))
+    """, (judge, group_id, vote_json))
     db.commit()
     return jsonify({"ok": True})
 
@@ -304,24 +325,37 @@ def api_judge_votes(judge):
     ).fetchall()
     votes = {}
     for r in rows:
-        votes[r["group_id"]] = {"vote_choice": r["vote_choice"]}
+        raw = r["vote_choice"]
+        try:
+            choices = json_mod.loads(raw)
+        except (json_mod.JSONDecodeError, TypeError):
+            choices = [raw]
+        votes[r["group_id"]] = {"vote_choices": choices}
     return jsonify(votes)
 
 
 @app.route("/api/results")
 def api_results():
     db = get_db()
-    rows = db.execute(
-        "SELECT group_id, vote_choice, COUNT(*) as cnt "
-        "FROM votes GROUP BY group_id, vote_choice"
-    ).fetchall()
+    rows = db.execute("SELECT group_id, vote_choice FROM votes").fetchall()
 
+    # Tally: for each group, count how many judges selected each option
     tallies = {}
+    judge_counts = {}
     for r in rows:
         gid = r["group_id"]
+        raw = r["vote_choice"]
+        try:
+            choices = json_mod.loads(raw)
+        except (json_mod.JSONDecodeError, TypeError):
+            choices = [raw]
+
         if gid not in tallies:
             tallies[gid] = {}
-        tallies[gid][r["vote_choice"]] = r["cnt"]
+            judge_counts[gid] = 0
+        judge_counts[gid] += 1
+        for choice in choices:
+            tallies[gid][choice] = tallies[gid].get(choice, 0) + 1
 
     results = []
     categories_order = []
@@ -338,13 +372,15 @@ def api_results():
             "category": cat,
             "votes": vote_counts,
             "total_votes": total_votes,
+            "judge_count": judge_counts.get(gid, 0),
         })
 
     for cat in categories_order:
+        option_labels = [opt["label"] for opt in VOTE_OPTIONS_BY_CATEGORY[cat]]
         groups = sorted(cat_groups[cat], key=lambda x: x["total_votes"], reverse=True)
         results.append({
             "category": cat,
-            "vote_options": VOTE_OPTIONS_BY_CATEGORY[cat],
+            "vote_options": option_labels,
             "groups": groups,
         })
 
