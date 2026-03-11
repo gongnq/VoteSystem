@@ -61,11 +61,11 @@ input, select { font-family: inherit; font-size: inherit; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success));
   border-radius: 3px; transition: width .3s ease; }
 
-/* ===== MAIN LAYOUT: scan left + grid right ===== */
+/* ===== MAIN LAYOUT: grid left 2/3 + scan right 1/3 ===== */
 .main-layout { display: flex; gap: 16px; min-height: calc(100vh - 110px); }
 .scan-col { display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-width: 200px; flex-shrink: 0; }
-.grid-col { flex: 1; overflow-y: auto; }
+  width: 33%; flex-shrink: 0; order: 2; }
+.grid-col { flex: 1; overflow-y: auto; order: 1; }
 
 /* ===== SCAN BUTTON ===== */
 .btn-scan { padding: 48px 40px; font-size: 1.6rem; border: none; border-radius: 20px;
@@ -79,43 +79,50 @@ input, select { font-family: inherit; font-size: inherit; }
 #qr-reader { width: 100%; border-radius: var(--radius); overflow: hidden; }
 
 /* ===== GROUP GRID ===== */
-.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 6px; align-content: start; }
+.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px; align-content: start; }
 .group-card { background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 10px; cursor: pointer;
-  transition: all .15s; display: flex; flex-direction: column; gap: 4px;
-  min-height: 60px; justify-content: center; }
-.group-card:hover { border-color: var(--primary); }
+  border-radius: var(--radius); padding: 12px; cursor: pointer;
+  transition: all .15s; display: flex; flex-direction: column; gap: 6px;
+  min-height: 72px; justify-content: center; }
+.group-card:hover { border-color: var(--primary); transform: translateY(-1px); }
 .group-card.scored { border-color: var(--success); background: var(--success); color: #fff; }
 .group-card.scored .group-name { color: #fff; }
 .group-card.scored .badge { background: rgba(255,255,255,.2); color: #fff; }
 .group-card.active { border-color: var(--primary); background: var(--surface2); }
-.badge { padding: 2px 6px; border-radius: 12px; font-size: 0.6rem;
+.badge { padding: 2px 8px; border-radius: 12px; font-size: 0.62rem;
   font-weight: 700; text-transform: uppercase; letter-spacing: .5px; display: inline-block; align-self: flex-start; }
 .badge-NPI { background: var(--npi-bg); color: var(--npi); }
 .badge-NTI { background: var(--nti-bg); color: var(--nti); }
-.group-name { font-weight: 600; font-size: 0.72rem; line-height: 1.25; }
-.group-card .check-mark { font-size: 0.85rem; }
+.group-name { font-weight: 600; font-size: 0.76rem; line-height: 1.3; }
+.group-card .check-mark { font-size: 0.9rem; }
 
 /* ===== VOTING PANEL (full-screen overlay) ===== */
 .voting-panel { position: fixed; inset: 0; background: var(--bg); z-index: 100;
-  display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
+  display: flex; flex-direction: column; padding: 20px 32px; overflow-y: auto; }
 .voting-header { display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 12px; flex-shrink: 0; }
-.voting-header h3 { font-size: 1.8rem; font-weight: 700; }
-.vote-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-  flex: 1; max-height: 60vh; margin-bottom: 16px; }
-.vote-option-btn { border: 2px solid var(--border); border-radius: 12px;
+  margin-bottom: 28px; flex-shrink: 0; }
+.voting-header h3 { font-size: 1.8rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), #a29bfe);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; }
+.btn-close-vote { padding: 12px 28px; font-size: 1rem; border: 2px solid var(--border);
+  border-radius: var(--radius); background: var(--surface2); color: var(--text);
+  font-weight: 600; transition: all .15s; }
+.btn-close-vote:hover { border-color: var(--text); color: #fff; }
+.vote-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  flex: 1; margin-bottom: 20px; }
+.vote-option-btn { aspect-ratio: 1; border: 2px solid var(--border); border-radius: 16px;
   background: var(--surface2); color: var(--text); font-size: 2rem; font-weight: 700;
   transition: all .2s; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  text-align: center; padding: 16px; line-height: 1.2; word-break: break-word; }
+  text-align: center; padding: 20px; line-height: 1.2; word-break: break-word; }
 .vote-option-btn:hover { border-color: var(--text2); transform: scale(1.02); }
 .vote-option-btn.selected { border-color: #fff; background: #4caf50; color: #fff;
   box-shadow: 0 0 0 4px rgba(76,175,80,.5), 0 8px 24px rgba(76,175,80,.3); transform: scale(1.03); }
 .option-subtitle { display: block; font-size: 0.5em; font-weight: 400; margin-top: 8px; opacity: .75; }
-.submit-row { display: flex; justify-content: center; gap: 12px; flex-shrink: 0; }
-.submit-row .btn { padding: 14px 48px; font-size: 1.05rem; }
+.submit-row { display: flex; justify-content: center; gap: 16px; flex-shrink: 0; padding-bottom: 12px; }
+.submit-row .btn { padding: 16px 56px; font-size: 1.1rem; }
 
 /* ===== TOAST ===== */
 .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -177,35 +184,46 @@ input, select { font-family: inherit; font-size: inherit; }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
   .main-layout { flex-direction: column; min-height: auto; }
-  .scan-col { min-width: auto; }
-  .btn-scan { padding: 32px 28px; font-size: 1.2rem; }
-  .btn-scan svg { width: 56px; height: 56px; }
-  .group-grid { grid-template-columns: repeat(3, 1fr); }
-  .vote-option-btn { font-size: 1.2rem; }
+  .scan-col { width: auto; order: 1; }
+  .grid-col { order: 2; }
+  .btn-scan { padding: 28px 24px; font-size: 1.1rem; }
+  .btn-scan svg { width: 48px; height: 48px; }
+  .group-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .group-card { padding: 8px; min-height: 56px; }
+  .group-name { font-size: 0.68rem; }
+  .vote-option-btn { font-size: 1.2rem; aspect-ratio: auto; padding: 24px 16px; }
   .vote-options { gap: 10px; }
   .voting-header h3 { font-size: 1.3rem; }
+  .voting-header { margin-bottom: 16px; }
+  .btn-close-vote { padding: 8px 18px; font-size: 0.85rem; }
 }
 
 @media (min-width: 768px) {
-  .scan-col { min-width: 260px; }
-  .group-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-  .group-name { font-size: 0.78rem; }
+  .group-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .group-name { font-size: 0.8rem; }
+  .group-card { padding: 14px; min-height: 80px; }
   .vote-option-btn { font-size: 2.4rem; }
-  .voting-header h3 { font-size: 2.2rem; }
+  .voting-header h3 { font-size: 2.4rem; }
+  .voting-header { margin-bottom: 32px; }
+  .btn-close-vote { padding: 14px 32px; font-size: 1.05rem; }
 }
 
 @media (min-width: 768px) and (orientation: landscape) {
   .container { padding: 8px 20px; }
   .header { padding: 6px 0; margin-bottom: 6px; }
   .progress-wrap { margin-bottom: 6px; }
-  .scan-col { min-width: 280px; }
-  .btn-scan { padding: 56px 48px; font-size: 1.8rem; }
-  .btn-scan svg { width: 100px; height: 100px; }
-  .group-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px;
-    max-height: calc(100vh - 130px); overflow-y: auto; }
-  .vote-options { gap: 24px; max-width: 900px; margin: 0 auto 16px; }
+  .scan-col { width: 30%; }
+  .btn-scan { padding: 52px 44px; font-size: 1.7rem; }
+  .btn-scan svg { width: 96px; height: 96px; }
+  .group-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;
+    max-height: calc(100vh - 120px); overflow-y: auto; }
+  .group-card { min-height: 70px; }
+  .voting-panel { padding: 24px 48px; }
+  .voting-header { margin-bottom: 36px; }
+  .voting-header h3 { font-size: 2.8rem; }
+  .vote-options { gap: 28px; max-width: 960px; margin: 0 auto; flex: 1; }
   .vote-option-btn { font-size: 2.8rem; }
-  .voting-header h3 { font-size: 2.6rem; }
+  .btn-close-vote { padding: 16px 36px; font-size: 1.1rem; }
 }
 
 @media print {
@@ -282,7 +300,7 @@ input, select { font-family: inherit; font-size: inherit; }
 <div class="voting-panel hidden" id="voting-panel">
   <div class="voting-header">
     <h3 id="voting-group-name"></h3>
-    <button class="btn btn-outline btn-sm" onclick="closeVoting()">Close</button>
+    <button class="btn-close-vote" onclick="closeVoting()">Close</button>
   </div>
   <div class="vote-options" id="vote-options"></div>
   <div class="submit-row">
