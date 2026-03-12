@@ -84,19 +84,23 @@ input, select { font-family: inherit; font-size: inherit; }
 .group-card { background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 12px; cursor: pointer;
   transition: all .15s; display: flex; flex-direction: column; gap: 6px;
-  min-height: 72px; justify-content: center; }
+  min-height: 72px; justify-content: center; align-items: center; text-align: center;
+  position: relative; }
 .group-card:hover { border-color: var(--primary); transform: translateY(-1px); }
 .group-card.scored { border-color: var(--success); background: var(--success); color: #fff; }
+.group-card.scored .group-num { color: #fff; }
 .group-card.scored .group-name { color: #fff; }
 .group-card.scored .badge { background: rgba(255,255,255,.2); color: #fff; }
 .badge-prfaq { background: rgba(253,203,110,.18); color: #fdcb6e; margin-left: 4px; }
 .group-card.scored .badge-prfaq { background: rgba(253,203,110,.25); color: #fdcb6e; }
 .group-card.active { border-color: var(--primary); background: var(--surface2); }
+.card-badges { position: absolute; top: 6px; left: 6px; display: flex; gap: 3px; }
 .badge { padding: 2px 8px; border-radius: 12px; font-size: 0.62rem;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .5px; display: inline-block; align-self: flex-start; }
+  font-weight: 700; text-transform: uppercase; letter-spacing: .5px; display: inline-block; }
 .badge-NPI { background: var(--npi-bg); color: var(--npi); }
 .badge-NTI { background: var(--nti-bg); color: var(--nti); }
-.group-name { font-weight: 600; font-size: 1.05rem; line-height: 1.3; }
+.group-num { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.group-name { font-weight: 600; font-size: 1.25rem; line-height: 1.3; }
 .group-card .check-mark { font-size: 0.9rem; }
 
 /* ===== VOTING PANEL (full-screen overlay) ===== */
@@ -104,7 +108,7 @@ input, select { font-family: inherit; font-size: inherit; }
   display: flex; flex-direction: column; padding: 20px 32px; overflow: hidden; }
 .voting-header { display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 20px; flex-shrink: 0; }
-.voting-header h3 { font-size: 1.2rem; font-weight: 700;
+.voting-header h3 { font-size: 1.6rem; font-weight: 700;
   background: linear-gradient(135deg, var(--primary), #a29bfe);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text; }
@@ -203,10 +207,10 @@ input, select { font-family: inherit; font-size: inherit; }
 
 @media (min-width: 768px) {
   .group-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-  .group-name { font-size: 0.8rem; }
+  .group-name { font-size: 1rem; }
   .group-card { padding: 14px; min-height: 80px; }
   .vote-option-btn { font-size: 2.2rem; width: min(36vh, 28vw); max-width: 340px; }
-  .voting-header h3 { font-size: 1.4rem; }
+  .voting-header h3 { font-size: 1.8rem; }
   .voting-header { margin-bottom: 24px; }
   .btn-close-vote { padding: 14px 32px; font-size: 1.05rem; }
 }
@@ -224,7 +228,7 @@ input, select { font-family: inherit; font-size: inherit; }
   .group-name { font-size: 0.95rem; }
   .voting-panel { padding: 16px 48px; }
   .voting-header { margin-bottom: 12px; }
-  .voting-header h3 { font-size: 1.5rem; }
+  .voting-header h3 { font-size: 2rem; }
   .vote-options { gap: 32px; }
   .vote-option-btn { font-size: 2.6rem; width: min(42vh, 28vw); max-width: 400px; }
   .btn-close-vote { padding: 14px 36px; font-size: 1.05rem; }
@@ -310,7 +314,7 @@ input, select { font-family: inherit; font-size: inherit; }
   </div>
   <div class="vote-options" id="vote-options"></div>
   <div class="submit-row">
-    <button class="btn btn-success" id="btn-submit-vote" onclick="submitVote()" disabled>Submit Vote</button>
+    <button class="btn btn-success" id="btn-submit-vote" onclick="submitVote()">Submit Vote</button>
   </div>
 </div>
 
@@ -537,12 +541,17 @@ function renderGroupGrid() {
     card.onclick = () => openVoting(g.id);
     const displayCat = g.display_category || g.category;
     const hasPrfaq = existing && existing.vote_choices && existing.vote_choices.includes('PRFAQ');
+    // Split "1. Some Name" into number and rest
+    const numMatch = g.name.match(/^(\d+)\.\s*(.*)$/);
+    const numPart = numMatch ? numMatch[1] : '';
+    const namePart = numMatch ? numMatch[2] : g.name;
     card.innerHTML = `
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+      <div class="card-badges">
         <span class="badge badge-${displayCat}">${displayCat}</span>
         ${hasPrfaq ? '<span class="badge badge-prfaq">★ PRFAQ</span>' : ''}
       </div>
-      <div class="group-name">${g.name}</div>
+      ${numPart ? `<div class="group-num">${numPart}</div>` : ''}
+      <div class="group-name">${namePart}</div>
       ${isScored ? '<span class="check-mark">&#10003;</span>' : ''}
     `;
     grid.appendChild(card);
@@ -604,7 +613,7 @@ function toggleOption(option) {
 }
 
 function updateSubmitButton() {
-  document.getElementById('btn-submit-vote').disabled = selectedChoices.length === 0;
+  // always enabled — submitting with no selection is allowed
 }
 
 function closeVoting() {
@@ -614,7 +623,7 @@ function closeVoting() {
 }
 
 async function submitVote() {
-  if (selectedChoices.length === 0 || !currentGroupId) return;
+  if (!currentGroupId) return;
   if (selectedChoices.includes('PRFAQ') && getPrfaqCount(currentGroupId) >= MAX_PRFAQ) {
     showToast(`You can only select PRFAQ for up to ${MAX_PRFAQ} groups`, 'warning');
     return;
@@ -624,7 +633,11 @@ async function submitVote() {
     body: JSON.stringify({ judge: currentJudge, group_id: currentGroupId, vote_choices: selectedChoices }),
   });
   if (res.ok) {
-    judgeVotes[currentGroupId] = { vote_choices: [...selectedChoices] };
+    if (selectedChoices.length === 0) {
+      delete judgeVotes[currentGroupId];
+    } else {
+      judgeVotes[currentGroupId] = { vote_choices: [...selectedChoices] };
+    }
     showToast('Vote submitted!');
     closeVoting();
   } else {

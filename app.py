@@ -304,8 +304,15 @@ def api_vote():
     if not group_info:
         return jsonify({"error": "Invalid group"}), 400
 
-    if not isinstance(vote_choices, list) or len(vote_choices) == 0:
-        return jsonify({"error": "Select at least one option"}), 400
+    if not isinstance(vote_choices, list):
+        return jsonify({"error": "vote_choices must be a list"}), 400
+
+    # Empty selection: remove existing vote
+    if len(vote_choices) == 0:
+        db = get_db()
+        db.execute("DELETE FROM votes WHERE judge = ? AND group_id = ?", (judge, group_id))
+        db.commit()
+        return jsonify({"ok": True})
 
     valid_labels = {opt["label"] for opt in VOTE_OPTIONS_BY_CATEGORY[group_info[2]]}
     for choice in vote_choices:
