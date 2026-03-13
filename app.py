@@ -19,34 +19,56 @@ app = Flask(__name__)
 # ---------------------------------------------------------------------------
 # JUDGES
 # ---------------------------------------------------------------------------
-JUDGES = ["Rob", "Regien", "Adam", "Amit", "Alok", "Prasad", "Volker", "Toby", "Chien"]
+JUDGES = ["Rob", "Adam", "Volker", "Toby", "Alok", "Leticia", "Prasad", "Amit", "Regien", "Richard", "Owen", "Yongzhi"]
 
 # ---------------------------------------------------------------------------
 # GROUPS — (id, display_name, category)
 # "NPI_PRE" = NPI groups with the extra PRE-ORDER option (displayed as "NPI")
 # ---------------------------------------------------------------------------
 GROUPS = [
-    ("G-1",  "1. Echo Frames Reimagined: Your Private AI Assistant for Work, Life & Shopping", "NPI"),
-    ("G-2",  "2. Alexa UI Plus - Fire TV Smart Scene Analysis", "NPI"),
-    ("G-3",  "3. Pulse ID", "NPI_PRE"),
-    ("G-4",  "4. Re-imagined Wireless Charging for Metal Cover Devices", "NPI"),
-    ("G-5",  "5. Story Pal: The AI-Plush That Brings Multilingual Stories to Life", "NPI_PRE"),
-    ("G-6",  "6. AI Powered Multimodal E-commerce Product Shooting Camera", "NPI_PRE"),
-    ("G-7",  "7. AI Vision Mate Glasses - Second Sight for the Visually Impaired", "NPI"),
-    ("G-8",  "8. Detachable Flip Camera Module with 360-degree Field for Echo Show Devices", "NPI"),
-    ("G-9",  "9. Smart Necklace Transforms Daily Life With AI-Powered Personal Assistant", "NPI_PRE"),
-    ("G-10", "10. Chroma Mirror: The AI Stylist That Unlocks Your Most Confident Look", "NPI"),
-    ("G-11", "11. An Inner Spider Speaker Construction for Full Range", "NTI"),
-    ("G-12", "12. Edge to Edge Display Cover Lens", "NTI"),
-    ("G-13", "13. BOBArtender - AI-Powered Bubble Tea Generation", "NTI"),
-    ("G-14", "14. The Family AI Cinema Butler: A TV That Knows You and Brings You Together", "NTI"),
-    ("G-15", "15. Stratos", "NTI"),
-    ("G-16", "16. Multi-Modal Competitive Intelligence AI Agent", "NTI"),
-    ("G-17", "17. Hercules: A Cloud-based AI/ML Platform", "NTI"),
-    ("G-18", "18. Manufacturing Smart Assistant", "NTI"),
-    ("G-19", "19. Intelligent Quality: AI-Powered Battery Manufacturing at Scale", "NTI"),
-    ("G-20", "20. Green Design 1", "NTI"),
-    ("G-21", "21. Green Design 2: New-to-Industry PCB Technologies of Recyclable Substrate & Additive Manufacturing", "NTI"),
+    # (id, full_name_for_voting, category, card_name_for_homepage)
+    ("G-1",  "1. Echo Frames Reimagined: Your Private AI Assistant for Work, Life & Shopping", "NPI",
+             "Echo Frames Reimagined"),
+    ("G-2",  "2. Alexa UI Plus - Fire TV Smart Scene Analysis", "NPI",
+             "Alexa UI Plus"),
+    ("G-3",  "3. Pulse ID", "NPI_PRE",
+             "Pulse ID badge"),
+    ("G-4",  "4. Re-imagined Wireless Charging for Metal Cover Devices", "NPI",
+             "Re-imagined Wireless Charging"),
+    ("G-5",  "5. Story Pal: The AI-Plush That Brings Multilingual Stories to Life", "NPI_PRE",
+             "Amazon Unveils Story Pal"),
+    ("G-6",  "6. AI Powered Multimodal E-commerce Product Shooting Camera", "NPI_PRE",
+             "AI Powered Multimodal Camera"),
+    ("G-7",  "7. AI Vision Mate Glasses - Second Sight for the Visually Impaired", "NPI",
+             "AI Vision Mate Glasses"),
+    ("G-8",  "8. Detachable Flip Camera Module with 360-degree Field for Echo Show Devices", "NPI",
+             "Detachable Flip 360 Camera"),
+    ("G-9",  "9. Smart Necklace Transforms Daily Life With AI-Powered Personal Assistant", "NPI_PRE",
+             "Smart Necklace"),
+    ("G-10", "10. Chroma Mirror: The AI Stylist That Unlocks Your Most Confident Look", "NPI",
+             "Chroma Mirror"),
+    ("G-11", "11. An Inner Spider Speaker Construction for Full Range", "NTI",
+             "Inner Spider Design"),
+    ("G-12", "12. Edge to Edge Display Cover Lens", "NTI",
+             "Edge to edge display cover lens"),
+    ("G-13", "13. BOBArtender - AI-Powered Bubble Tea Generation", "NTI",
+             "BOBArtender"),
+    ("G-14", "14. The Family AI Cinema Butler: A TV That Knows You and Brings You Together", "NTI",
+             "The Family AI Cinema Butler"),
+    ("G-15", "15. Stratos", "NTI",
+             "Stratos: AI Platform"),
+    ("G-16", "16. Multi-Modal Competitive Intelligence AI Agent", "NTI",
+             "Multi-Modal AI Agent"),
+    ("G-17", "17. Hercules: A Cloud-based AI/ML Platform", "NTI",
+             "Hercules: A Cloud-based AI/ML Platform"),
+    ("G-18", "18. Manufacturing Smart Assistant", "NTI",
+             "Manufacturing Smart Assistant"),
+    ("G-19", "19. Intelligent Quality: AI-Powered Battery Manufacturing at Scale", "NTI",
+             "Intelligent Quality: AI-Powered"),
+    ("G-20", "20. Green Design 1", "NTI",
+             "Green Technology for Sustainablity"),
+    ("G-21", "21. Green Design 2: New-to-Industry PCB Technologies of Recyclable Substrate & Additive Manufacturing", "NTI",
+             "Recyclable Substrate PCB Technologies"),
 ]
 
 # Maps internal category to the display label shown in badges and admin tabs
@@ -189,10 +211,12 @@ def pwa_icon():
 @app.route("/api/config")
 def api_config():
     group_list = []
-    for gid, name, cat in GROUPS:
+    for gid, name, cat, *_rest in GROUPS:
+        card_name = _rest[0] if _rest else name
         group_list.append({
             "id": gid,
             "name": name,
+            "card_name": card_name,
             "category": cat,
             "display_category": DISPLAY_CATEGORY[cat],
             "vote_options": VOTE_OPTIONS_BY_CATEGORY[cat],
@@ -293,7 +317,7 @@ def api_vote():
         return jsonify({"error": "Invalid judge"}), 400
 
     group_info = None
-    for gid, name, cat in GROUPS:
+    for gid, name, cat, *_rest in GROUPS:
         if gid == group_id:
             group_info = (gid, name, cat)
             break
@@ -387,7 +411,7 @@ def api_results():
     results = []
     categories_order = []
     cat_groups = {}
-    for gid, name, cat in GROUPS:
+    for gid, name, cat, *_rest in GROUPS:
         dcat = DISPLAY_CATEGORY[cat]
         if dcat not in cat_groups:
             cat_groups[dcat] = []
