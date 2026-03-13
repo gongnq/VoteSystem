@@ -24,15 +24,16 @@
 }
 html { font-size: 16px; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg); color: var(--text); min-height: 100vh; min-height: 100dvh;
+  background: var(--bg); color: var(--text);
+  height: var(--app-h, 100vh); overflow: hidden;
   padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 button { cursor: pointer; font-family: inherit; font-size: inherit; }
 input, select { font-family: inherit; font-size: inherit; }
 .hidden { display: none !important; }
 
 /* ===== LAYOUT ===== */
-.container { max-width: 100%; margin: 0 auto; padding: 10px 16px; }
-#view-judge { height: 100vh; height: var(--app-h, 100vh); display: flex; flex-direction: column; overflow: hidden; }
+.container { max-width: 100%; margin: 0 auto; padding: 10px 16px; overflow-y: auto; height: 100%; }
+#view-judge { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
 .header { display: flex; justify-content: space-between; align-items: center;
   padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
 .header h1 { font-size: 1.5rem; font-weight: 700; }
@@ -814,12 +815,14 @@ window.addEventListener('beforeunload', () => {
 // ===== PWA =====
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 
-// ===== VIEWPORT HEIGHT FIX (Firefox / mobile browsers) =====
+// ===== VIEWPORT HEIGHT FIX (mobile browsers with bottom chrome) =====
 function setAppHeight() {
-  document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
+  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty('--app-h', h + 'px');
 }
 setAppHeight();
 window.addEventListener('resize', setAppHeight);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', setAppHeight);
 
 // ===== START =====
 init();
