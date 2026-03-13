@@ -32,7 +32,7 @@ input, select { font-family: inherit; font-size: inherit; }
 
 /* ===== LAYOUT ===== */
 .container { max-width: 100%; margin: 0 auto; padding: 10px 16px; }
-#view-judge { height: 100vh; height: 100svh; display: flex; flex-direction: column; overflow: hidden; }
+#view-judge { height: 100vh; height: var(--app-h, 100vh); display: flex; flex-direction: column; overflow: hidden; }
 .header { display: flex; justify-content: space-between; align-items: center;
   padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
 .header h1 { font-size: 1.5rem; font-weight: 700; }
@@ -813,6 +813,13 @@ window.addEventListener('beforeunload', () => {
 
 // ===== PWA =====
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+
+// ===== VIEWPORT HEIGHT FIX (Firefox / mobile browsers) =====
+function setAppHeight() {
+  document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
+}
+setAppHeight();
+window.addEventListener('resize', setAppHeight);
 
 // ===== START =====
 init();
