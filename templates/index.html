@@ -96,7 +96,7 @@ input, select { font-family: inherit; font-size: inherit; }
 .group-card.scored .badge-prfaq { background: rgba(253,203,110,.25); color: #fdcb6e; }
 .group-card.active { border-color: var(--primary); background: var(--surface2); }
 .card-badges { display: flex; gap: 3px; justify-self: start; height: 20px; align-items: flex-start; }
-.badge { padding: 2px 8px; border-radius: 12px; font-size: 0.62rem;
+.badge { padding: 3px 10px; border-radius: 12px; font-size: 0.72rem;
   font-weight: 700; text-transform: uppercase; letter-spacing: .5px; display: inline-block; }
 .badge-NPI { background: var(--npi-bg); color: var(--npi); }
 .badge-NTI { background: var(--nti-bg); color: var(--nti); }
@@ -539,7 +539,7 @@ function renderGroupGrid() {
   let scored = 0;
   CONFIG.groups.forEach(g => {
     const existing = judgeVotes[g.id];
-    const isScored = existing && existing.vote_choices && existing.vote_choices.length > 0;
+    const isScored = existing != null;
     if (isScored) scored++;
     const card = document.createElement('div');
     card.className = `group-card${isScored ? ' scored' : ''}${currentGroupId === g.id ? ' active' : ''}`;
@@ -553,7 +553,7 @@ function renderGroupGrid() {
     card.innerHTML = `
       <div class="card-badges">
         <span class="badge badge-${displayCat}">${displayCat}</span>
-        ${hasPrfaq ? '<span class="badge badge-prfaq">★ PRFAQ</span>' : ''}
+        ${hasPrfaq ? '<span class="badge badge-prfaq">PRFAQ</span>' : ''}
       </div>
       ${numPart ? `<div class="group-num">${numPart}</div>` : ''}
       <div class="group-name">${namePart}</div>
