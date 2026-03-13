@@ -638,11 +638,7 @@ async function submitVote() {
     body: JSON.stringify({ judge: currentJudge, group_id: currentGroupId, vote_choices: selectedChoices }),
   });
   if (res.ok) {
-    if (selectedChoices.length === 0) {
-      delete judgeVotes[currentGroupId];
-    } else {
-      judgeVotes[currentGroupId] = { vote_choices: [...selectedChoices] };
-    }
+    judgeVotes[currentGroupId] = { vote_choices: [...selectedChoices] };
     showToast('Vote submitted!');
     closeVoting();
   } else {

@@ -303,12 +303,9 @@ def api_vote():
     if not isinstance(vote_choices, list):
         return jsonify({"error": "vote_choices must be a list"}), 400
 
-    # Empty selection: remove existing vote
+    # Empty selection: still counts as voted (judge reviewed but chose nothing)
     if len(vote_choices) == 0:
-        db = get_db()
-        db.execute("DELETE FROM votes WHERE judge = ? AND group_id = ?", (judge, group_id))
-        db.commit()
-        return jsonify({"ok": True})
+        vote_choices = []
 
     valid_labels = {opt["label"] for opt in VOTE_OPTIONS_BY_CATEGORY[group_info[2]]}
     for choice in vote_choices:
