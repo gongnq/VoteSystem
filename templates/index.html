@@ -24,16 +24,14 @@
 }
 html { font-size: 16px; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg); color: var(--text);
-  height: var(--app-h, 100vh); overflow: hidden;
+  background: var(--bg); color: var(--text); min-height: 100vh;
   padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 button { cursor: pointer; font-family: inherit; font-size: inherit; }
 input, select { font-family: inherit; font-size: inherit; }
 .hidden { display: none !important; }
 
 /* ===== LAYOUT ===== */
-.container { max-width: 100%; margin: 0 auto; padding: 10px 16px; overflow-y: auto; height: 100%; }
-#view-judge { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.container { max-width: 100%; margin: 0 auto; padding: 10px 16px; }
 .header { display: flex; justify-content: space-between; align-items: center;
   padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
 .header h1 { font-size: 1.5rem; font-weight: 700; }
@@ -64,7 +62,7 @@ input, select { font-family: inherit; font-size: inherit; }
   border-radius: 3px; transition: width .3s ease; }
 
 /* ===== MAIN LAYOUT: grid left 2/3 + scan right 1/3 ===== */
-.main-layout { display: flex; gap: 16px; flex: 1; min-height: 0; }
+.main-layout { display: flex; gap: 16px; min-height: 60vh; }
 .scan-col { display: flex; flex-direction: column; align-items: center; justify-content: center;
   width: 33%; flex-shrink: 0; order: 2; }
 .grid-col { flex: 1; overflow: hidden; order: 1; }
@@ -195,8 +193,7 @@ input, select { font-family: inherit; font-size: inherit; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
-  #view-judge { height: auto; overflow: visible; }
-  .main-layout { flex-direction: column; flex: none; }
+  .main-layout { flex-direction: column; min-height: auto; }
   .scan-col { width: auto; order: 1; padding: 12px 0; }
   .grid-col { order: 2; }
   .btn-scan { padding: 28px 24px; font-size: 1.1rem; width: 100%; }
@@ -814,15 +811,6 @@ window.addEventListener('beforeunload', () => {
 
 // ===== PWA =====
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
-
-// ===== VIEWPORT HEIGHT FIX (mobile browsers with bottom chrome) =====
-function setAppHeight() {
-  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  document.documentElement.style.setProperty('--app-h', h + 'px');
-}
-setAppHeight();
-window.addEventListener('resize', setAppHeight);
-if (window.visualViewport) window.visualViewport.addEventListener('resize', setAppHeight);
 
 // ===== START =====
 init();
