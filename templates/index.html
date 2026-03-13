@@ -24,7 +24,7 @@
 }
 html { font-size: 16px; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg); color: var(--text); min-height: 100vh;
+  background: var(--bg); color: var(--text); min-height: 100vh; min-height: 100dvh;
   padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 button { cursor: pointer; font-family: inherit; font-size: inherit; }
 input, select { font-family: inherit; font-size: inherit; }
@@ -32,6 +32,7 @@ input, select { font-family: inherit; font-size: inherit; }
 
 /* ===== LAYOUT ===== */
 .container { max-width: 100%; margin: 0 auto; padding: 10px 16px; }
+#view-judge { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 .header { display: flex; justify-content: space-between; align-items: center;
   padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
 .header h1 { font-size: 1.5rem; font-weight: 700; }
@@ -62,7 +63,7 @@ input, select { font-family: inherit; font-size: inherit; }
   border-radius: 3px; transition: width .3s ease; }
 
 /* ===== MAIN LAYOUT: grid left 2/3 + scan right 1/3 ===== */
-.main-layout { display: flex; gap: 16px; height: calc(100vh - 110px); }
+.main-layout { display: flex; gap: 16px; flex: 1; min-height: 0; }
 .scan-col { display: flex; flex-direction: column; align-items: center; justify-content: center;
   width: 33%; flex-shrink: 0; order: 2; }
 .grid-col { flex: 1; overflow: hidden; order: 1; }
@@ -193,7 +194,8 @@ input, select { font-family: inherit; font-size: inherit; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
-  .main-layout { flex-direction: column; height: auto; }
+  #view-judge { height: auto; overflow: visible; }
+  .main-layout { flex-direction: column; flex: none; }
   .scan-col { width: auto; order: 1; padding: 12px 0; }
   .grid-col { order: 2; }
   .btn-scan { padding: 28px 24px; font-size: 1.1rem; width: 100%; }
@@ -222,7 +224,6 @@ input, select { font-family: inherit; font-size: inherit; }
   .container { padding: 8px 20px; }
   .header { padding: 4px 0; margin-bottom: 4px; }
   .progress-wrap { margin-bottom: 4px; }
-  .main-layout { height: calc(100vh - 90px); }
   .scan-col { width: 30%; }
   .btn-scan { padding: 60px 44px; font-size: 1.8rem; border-radius: 24px; }
   .btn-scan svg { width: 100px; height: 100px; }
@@ -364,6 +365,7 @@ let heartbeatTimer = null;
 let qrScanner = null;
 let scannerRunning = false;
 let qrProcessing = false;
+let cameraRequesting = false;
 const SESSION_ID = localStorage.getItem('session_id') || (Math.random().toString(36).slice(2) + Date.now().toString(36));
 localStorage.setItem('session_id', SESSION_ID);
 
@@ -482,12 +484,14 @@ function startScanner() {
   document.getElementById('qr-reader-wrap').classList.remove('hidden');
   scannerRunning = true; qrProcessing = false;
   qrScanner = new Html5Qrcode("qr-reader");
+  cameraRequesting = true;
   qrScanner.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: { width: 220, height: 220 } },
     (text) => { if (!qrProcessing) { qrProcessing = true; onQrScanned(text); } },
     () => {}
-  ).catch(() => { showToast('Camera not available'); stopScanner(); });
+  ).then(() => { cameraRequesting = false; })
+   .catch(() => { cameraRequesting = false; showToast('Camera not available'); stopScanner(); });
 }
 
 async function stopScanner() {
@@ -800,7 +804,7 @@ function showToast(msg, type) {
 
 // ===== PAGE UNLOAD =====
 window.addEventListener('beforeunload', () => {
-  if (currentJudge) {
+  if (currentJudge && !cameraRequesting) {
     navigator.sendBeacon('/api/judge/unlock',
       new Blob([JSON.stringify({ judge: currentJudge, session_id: SESSION_ID })],
         { type: 'application/json' }));

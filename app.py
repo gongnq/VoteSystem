@@ -159,8 +159,9 @@ def manifest():
         "background_color": "#0f1117",
         "theme_color": "#0f1117",
         "icons": [
-            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
-            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"},
+            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+            {"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"},
         ],
     }
     return Response(json_mod.dumps(m), mimetype="application/manifest+json")
@@ -178,6 +179,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
 
 @app.route("/icon-192.png")
 @app.route("/icon-512.png")
+@app.route("/icon.svg")
 def pwa_icon():
     size = 512 if "512" in request.path else 192
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}">
@@ -187,6 +189,24 @@ def pwa_icon():
       <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle"
             font-family="sans-serif" font-weight="bold" font-size="{size//6}" fill="#fff">CRAWL</text>
     </svg>"""
+    # Serve PNG for home screen icons; fall back to SVG
+    if request.path.endswith(".png"):
+        try:
+            from PIL import Image, ImageDraw, ImageFont
+            import io
+            img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(img)
+            draw.rounded_rectangle([0, 0, size, size], radius=min(40, size // 5), fill=(108, 92, 231))
+            font = ImageFont.load_default(size // 6)
+            for txt, yf in [("DEMO", 0.42), ("CRAWL", 0.62)]:
+                bb = draw.textbbox((0, 0), txt, font=font)
+                tw, th = bb[2] - bb[0], bb[3] - bb[1]
+                draw.text(((size - tw) / 2, size * yf - th / 2), txt, fill="white", font=font)
+            buf = io.BytesIO()
+            img.save(buf, "PNG")
+            return Response(buf.getvalue(), mimetype="image/png")
+        except Exception:
+            pass
     return Response(svg, mimetype="image/svg+xml")
 
 
