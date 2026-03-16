@@ -50,7 +50,7 @@ GROUPS = [
     ("G-11", "11. An Inner Spider Speaker Construction for Full Range", "NTI",
              "Inner Spider Design"),
     ("G-12", "12. Edge to Edge Display Cover Lens", "NTI",
-             "Edge to edge display cover lens"),
+             "Edge to Edge display cover lens"),
     ("G-13", "13. BOBArtender - AI-Powered Bubble Tea Generation", "NTI",
              "BOBArtender"),
     ("G-14", "14. The Family AI Cinema Butler: A TV That Knows You and Brings You Together", "NTI",
@@ -80,18 +80,19 @@ DISPLAY_CATEGORY = {"NPI": "NPI", "NPI_PRE": "NPI", "NTI": "NTI"}
 # ---------------------------------------------------------------------------
 VOTE_OPTIONS_BY_CATEGORY = {
     "NPI": [
-        {"label": "PRFAQ", "subtitle": "(Product Maker)"},
-        {"label": "Customer Delight"},
+        {"label": "PRFAQ", "subtitle": "(Product / Feature Maker)"},
+        {"label": "Customer Delight", "subtitle": "(Customer Pain Points / <br>Customer Will Like)"},
     ],
     "NPI_PRE": [
-        {"label": "PRFAQ", "subtitle": "(Product Maker)"},
+        {"label": "PRFAQ", "subtitle": "(Product / Feature Maker)"},
         {"label": "PRE-ORDER"},
-        {"label": "Customer Delight"},
+        {"label": "Customer Delight", "subtitle": "(Customer Pain Points / <br>Customer Will Like)"},
     ],
     "NTI": [
-        {"label": "Product Concept"},
-        {"label": "Accelerator"},
-        {"label": "Think Big"},
+
+        {"label": "Product Concept", "subtitle": "(Technology Enabler)"},
+        {"label": "Accelerator", "subtitle": "(Operational Excellence /<br>AI Implementation /<br>Sustainable Energy)"},
+        {"label": "Think Big", "subtitle": "(Design for Long Term & Scalable)"},
     ],
 }
 
@@ -149,6 +150,7 @@ def init_db():
             group_id TEXT NOT NULL,
             vote_choice TEXT NOT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               
             UNIQUE(judge, group_id)
         )
     """)
