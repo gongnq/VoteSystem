@@ -342,6 +342,7 @@ input, select { font-family: inherit; font-size: inherit; }
   <div class="header">
     <h1>Admin Dashboard</h1>
     <div class="header-actions">
+      <button class="btn btn-sm" style="background:#e74c3c;color:#fff;" onclick="resetAllVotes()">🗑 Reset All Votes</button>
       <span style="color:var(--text2); font-size:0.78rem;">Auto-refresh: 5s</span>
       <button class="btn btn-outline btn-sm" onclick="showLogin()">Exit</button>
     </div>
@@ -787,6 +788,23 @@ function renderQrCodes() {
       if (el) new QRCode(el, { text: g.id, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
     });
   });
+}
+
+// ===== RESET ALL VOTES =====
+async function resetAllVotes() {
+  if (!confirm('⚠️ Are you sure you want to reset ALL votes and sessions?\n\nThis action cannot be undone!')) return;
+  const pin = prompt('Enter admin PIN to confirm:');
+  if (!pin) return;
+  const res = await fetch('/api/admin/reset', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin }),
+  });
+  if (res.ok) {
+    showToast('All votes and sessions have been cleared!');
+    loadAdminData();
+  } else {
+    showToast('Failed to reset: invalid PIN', 'warning');
+  }
 }
 
 // ===== TOAST =====

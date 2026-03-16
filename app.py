@@ -477,6 +477,19 @@ def api_admin_verify():
     return jsonify({"ok": False}), 403
 
 
+@app.route("/api/admin/reset", methods=["POST"])
+def api_admin_reset():
+    data = request.get_json(force=True)
+    pin = data.get("pin", "")
+    if pin != ADMIN_PIN:
+        return jsonify({"error": "Invalid PIN"}), 403
+    db = get_db()
+    db.execute("DELETE FROM votes")
+    db.execute("DELETE FROM judge_sessions")
+    db.commit()
+    return jsonify({"ok": True, "message": "All votes and sessions have been cleared"})
+
+
 # ---------------------------------------------------------------------------
 # Init & run
 # ---------------------------------------------------------------------------
