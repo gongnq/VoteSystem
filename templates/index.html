@@ -716,9 +716,18 @@ function renderResults(catResult) {
     container.innerHTML = '<p style="color:var(--text2);">No data yet.</p>'; return;
   }
   const options = catResult.vote_options || [];
+  // Separate scoring options (count toward Total) from non-scoring (PRE-ORDER)
+  const nonScoringOptions = ['PRE-ORDER'];
+  const scoringOpts = options.filter(o => !nonScoringOptions.includes(o));
+  const extraOpts = options.filter(o => nonScoringOptions.includes(o));
+
+  // Column order: Rank, Group, [scoring opts], Total, [extra opts like PRE-ORDER], Judges
   let html = `<table class="results-table"><thead><tr><th>Rank</th><th>Group</th>`;
-  options.forEach(opt => { html += `<th>${opt}</th>`; });
-  html += `<th>Total</th><th>Judges</th></tr></thead><tbody>`;
+  scoringOpts.forEach(opt => { html += `<th>${opt}</th>`; });
+  html += `<th>Total</th>`;
+  extraOpts.forEach(opt => { html += `<th>${opt}</th>`; });
+  html += `<th>Judges</th></tr></thead><tbody>`;
+
   // Build set of valid options per original_category
   const optionsByOrigCat = {};
   CONFIG.groups.forEach(gr => {
@@ -727,12 +736,23 @@ function renderResults(catResult) {
       optionsByOrigCat[gr.category] = new Set(opts);
     }
   });
-  catResult.groups.forEach((g, i) => {
-    const isWinner = i === 0 && g.total_votes > 0;
+
+  // Sort groups by scored total (excluding PRE-ORDER)
+  const sortedGroups = [...catResult.groups].sort((a, b) => {
+    const aTotal = scoringOpts.reduce((sum, opt) => sum + (a.votes[opt] || 0), 0);
+    const bTotal = scoringOpts.reduce((sum, opt) => sum + (b.votes[opt] || 0), 0);
+    return bTotal - aTotal;
+  });
+
+  sortedGroups.forEach((g, i) => {
     const validOpts = optionsByOrigCat[g.original_category] || new Set();
+    const scoredTotal = scoringOpts.reduce((sum, opt) => sum + (validOpts.has(opt) ? (g.votes[opt] || 0) : 0), 0);
+    const isWinner = i === 0 && scoredTotal > 0;
+
     html += `<tr class="${isWinner ? 'winner' : ''}">
       <td class="rank">${isWinner ? '\u{1F3C6}' : i + 1}</td><td>${g.name}</td>`;
-    options.forEach(opt => {
+    // Scoring option columns
+    scoringOpts.forEach(opt => {
       if (!validOpts.has(opt)) {
         html += `<td><span class="tally-chip" style="opacity:.25;">—</span></td>`;
       } else {
@@ -740,8 +760,18 @@ function renderResults(catResult) {
         html += `<td><span class="tally-chip${count > 0 ? ' has-votes' : ''}">${count}</span></td>`;
       }
     });
-    html += `<td style="font-weight:700;">${g.total_votes}</td>
-      <td style="color:var(--text2);font-size:0.82rem;">${g.judge_count}</td></tr>`;
+    // Total column (only scoring options)
+    html += `<td style="font-weight:700;">${scoredTotal}</td>`;
+    // Extra option columns (PRE-ORDER etc.)
+    extraOpts.forEach(opt => {
+      if (!validOpts.has(opt)) {
+        html += `<td><span class="tally-chip" style="opacity:.25;">—</span></td>`;
+      } else {
+        const count = g.votes[opt] || 0;
+        html += `<td><span class="tally-chip${count > 0 ? ' has-votes' : ''}">${count}</span></td>`;
+      }
+    });
+    html += `<td style="color:var(--text2);font-size:0.82rem;">${g.judge_count}</td></tr>`;
   });
   html += '</tbody></table>';
   container.innerHTML = html;
