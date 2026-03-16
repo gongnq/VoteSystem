@@ -65,8 +65,8 @@ input, select { font-family: inherit; font-size: inherit; }
 /* ===== MAIN LAYOUT: grid left 2/3 + scan right 1/3 ===== */
 .main-layout { display: flex; gap: 16px; flex: 1; min-height: 0; }
 .scan-col { display: flex; flex-direction: column; align-items: center; justify-content: center;
-  width: 33%; flex-shrink: 0; order: 2; }
-.grid-col { flex: 1; overflow: hidden; order: 1; }
+  width: 33%; flex-shrink: 0; order: 1; }
+.grid-col { flex: 1; overflow: hidden; order: 2; }
 
 /* ===== SCAN BUTTON ===== */
 .btn-scan { padding: 48px 40px; font-size: 1.6rem; border: none; border-radius: 20px;
@@ -76,7 +76,7 @@ input, select { font-family: inherit; font-size: inherit; }
 .btn-scan:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(108,92,231,.5); }
 .btn-scan svg { width: 80px; height: 80px; }
 .scan-hint { color: var(--text2); font-size: 0.8rem; margin-top: 8px; text-align: center; }
-.qr-reader-wrap { width: 100%; margin-top: 12px; position: relative; }
+.qr-reader-wrap { width: 100%; margin-bottom: 12px; position: relative; }
 #qr-reader { width: 100%; border-radius: var(--radius); overflow: hidden; }
 
 /* ===== GROUP GRID ===== */
@@ -133,7 +133,7 @@ input, select { font-family: inherit; font-size: inherit; }
 .vote-option-btn:hover { border-color: var(--text2); transform: scale(1.02); }
 .vote-option-btn.selected { border-color: #fff; background: #4caf50; color: #fff;
   box-shadow: 0 0 0 4px rgba(76,175,80,.5), 0 8px 24px rgba(76,175,80,.3); transform: scale(1.03); }
-.option-subtitle { display: block; font-size: 0.5em; font-weight: 400; margin-top: 8px; opacity: .75; }
+.option-subtitle { display: block; font-size: 0.7em; font-weight: 400; margin-top: 8px; opacity: .75; }
 .submit-row { display: flex; justify-content: center; gap: 16px; flex-shrink: 0; padding-bottom: 12px; }
 .submit-row .btn { padding: 16px 56px; font-size: 1.1rem; }
 
@@ -288,6 +288,12 @@ input, select { font-family: inherit; font-size: inherit; }
   <div class="main-layout" id="main-layout">
     <!-- Left: Scan -->
     <div class="scan-col" id="scan-col">
+      <div class="qr-reader-wrap hidden" id="qr-reader-wrap">
+        <div id="qr-reader"></div>
+        <div style="text-align:center; margin-top:8px;">
+          <button class="btn btn-outline btn-sm" onclick="stopScanner()">Cancel</button>
+        </div>
+      </div>
       <button class="btn-scan" id="btn-scan" onclick="toggleScanner()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/>
@@ -296,12 +302,6 @@ input, select { font-family: inherit; font-size: inherit; }
         Scan QR
       </button>
       <div class="scan-hint">Scan booth QR to vote</div>
-      <div class="qr-reader-wrap hidden" id="qr-reader-wrap">
-        <div id="qr-reader"></div>
-        <div style="text-align:center; margin-top:8px;">
-          <button class="btn btn-outline btn-sm" onclick="stopScanner()">Cancel</button>
-        </div>
-      </div>
     </div>
 
     <!-- Right: Group Grid -->
