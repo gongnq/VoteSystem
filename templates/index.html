@@ -104,7 +104,7 @@ input, select { font-family: inherit; font-size: inherit; }
 .badge-NTI { background: var(--nti-bg); color: var(--nti); }
 .group-num { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1;
   height: 2rem; display: flex; align-items: center; margin-bottom: 30px; }
-.group-name { font-weight: 600; font-size: 2.6rem; line-height: 1.3;
+.group-name { font-weight: 600; font-size: 3.2rem; line-height: 1.3;
   display: flex; align-items: start; justify-content: center;
   min-height: 4.9em; }
 .group-card .check-mark { font-size: 0.9rem; }
@@ -203,7 +203,7 @@ input, select { font-family: inherit; font-size: inherit; }
   .btn-scan svg { width: 48px; height: 48px; }
   .group-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .group-card { padding: 8px; min-height: 56px; }
-  .group-name { font-size: 0.68rem; }
+  .group-name { font-size: 0.85rem; }
   .vote-option-btn { font-size: 1.2rem; width: min(26vw, 26vh); }
   .vote-options { gap: 10px; }
   .voting-header h3 { font-size: 1rem; }
@@ -213,7 +213,7 @@ input, select { font-family: inherit; font-size: inherit; }
 
 @media (min-width: 768px) {
   .group-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-  .group-name { font-size: 1rem; }
+  .group-name { font-size: 1.3rem; }
   .group-card { padding: 14px; min-height: 80px; }
   .vote-option-btn { font-size: 2.2rem; width: min(36vh, 28vw); max-width: 340px; }
   .voting-header h3 { font-size: 1.8rem; }
@@ -230,7 +230,7 @@ input, select { font-family: inherit; font-size: inherit; }
   .btn-scan svg { width: 100px; height: 100px; }
   .group-grid { grid-template-columns: repeat(7, 1fr); gap: 6px; }
   .group-card { min-height: auto; padding: 8px 10px; }
-  .group-name { font-size: 1rem; }
+  .group-name { font-size: 1.3rem; }
   .voting-panel { padding: 16px 48px; }
   .voting-header { margin-bottom: 12px; }
   .voting-header h3 { font-size: 2rem; }
@@ -559,7 +559,6 @@ function renderGroupGrid() {
         <span class="badge badge-${displayCat}">${displayCat}</span>
         ${hasPrfaq ? '<span class="badge badge-prfaq">PRFAQ</span>' : ''}
       </div>
-      ${numPart ? `<div class="group-num">${numPart}</div>` : ''}
       <div class="group-name">${namePart}</div>
       ${isScored ? '<span class="check-mark">&#10003;</span>' : ''}
     `;
