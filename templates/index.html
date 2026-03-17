@@ -104,7 +104,7 @@ input, select { font-family: inherit; font-size: inherit; }
 .badge-NTI { background: var(--nti-bg); color: var(--nti); }
 .group-num { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1;
   height: 2rem; display: flex; align-items: center; margin-bottom: 30px; }
-.group-name { font-weight: 600; font-size: 2.8rem; line-height: 1.3;
+.group-name { font-weight: 600; font-size: 2.6rem; line-height: 1.3;
   display: flex; align-items: start; justify-content: center;
   min-height: 4.9em; }
 .group-card .check-mark { font-size: 0.9rem; }
@@ -142,6 +142,25 @@ input, select { font-family: inherit; font-size: inherit; }
   background: var(--success); color: #fff; padding: 12px 28px; border-radius: var(--radius-sm);
   font-weight: 600; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
 .toast.show { opacity: 1; }
+
+/* ===== CONFETTI ===== */
+.confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; }
+.confetti-piece { position: absolute; width: 10px; height: 10px; top: -20px;
+  animation: confetti-fall linear forwards; }
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; }
+}
+.celebration-text { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 3rem; font-weight: 800; text-align: center; z-index: 10000; pointer-events: none;
+  background: linear-gradient(135deg, #fdcb6e, #e17055, #6c5ce7, #00b894);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: celebration-pop 0.6s ease-out forwards, celebration-fade 3s ease-in forwards; }
+@keyframes celebration-pop { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes celebration-fade { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ===== ADMIN ===== */
 .pin-card { max-width: 360px; margin: 80px auto; background: var(--surface);
@@ -203,7 +222,7 @@ input, select { font-family: inherit; font-size: inherit; }
   .btn-scan svg { width: 48px; height: 48px; }
   .group-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .group-card { padding: 8px; min-height: 56px; }
-  .group-name { font-size: 0.78rem; }
+  .group-name { font-size: 0.68rem; }
   .vote-option-btn { font-size: 1.2rem; width: min(26vw, 26vh); }
   .vote-options { gap: 10px; }
   .voting-header h3 { font-size: 1rem; }
@@ -213,7 +232,7 @@ input, select { font-family: inherit; font-size: inherit; }
 
 @media (min-width: 768px) {
   .group-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-  .group-name { font-size: 1.15rem; }
+  .group-name { font-size: 1rem; }
   .group-card { padding: 14px; min-height: 80px; }
   .vote-option-btn { font-size: 2.2rem; width: min(36vh, 28vw); max-width: 340px; }
   .voting-header h3 { font-size: 1.8rem; }
@@ -230,7 +249,7 @@ input, select { font-family: inherit; font-size: inherit; }
   .btn-scan svg { width: 100px; height: 100px; }
   .group-grid { grid-template-columns: repeat(7, 1fr); gap: 6px; }
   .group-card { min-height: auto; padding: 8px 10px; }
-  .group-name { font-size: 1.15rem; }
+  .group-name { font-size: 1rem; }
   .voting-panel { padding: 16px 48px; }
   .voting-header { margin-bottom: 12px; }
   .voting-header h3 { font-size: 2rem; }
@@ -272,7 +291,7 @@ input, select { font-family: inherit; font-size: inherit; }
   <div class="header">
     <h1>2026 Asia Demo Crawl</h1>
     <div class="header-actions">
-      <span id="judge-label" style="color:var(--text2); font-size:0.85rem;"></span>
+      <span id="judge-label" style="color:var(--text); font-size:1.1rem; font-weight:600;"></span>
       <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
     </div>
   </div>
@@ -567,6 +586,7 @@ function renderGroupGrid() {
   document.getElementById('progress-text').textContent = `${scored} / ${CONFIG.groups.length}`;
   document.getElementById('progress-fill').style.width = `${(scored / CONFIG.groups.length) * 100}%`;
   updatePrfaqCounter();
+  checkAllVotesComplete();
 }
 
 // ===== VOTING =====
@@ -817,6 +837,42 @@ function renderQrCodes() {
       if (el) new QRCode(el, { text: g.id, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
     });
   });
+}
+
+// ===== CONFETTI CELEBRATION =====
+let celebrationShown = false;
+
+function checkAllVotesComplete() {
+  if (celebrationShown) return;
+  const totalGroups = CONFIG.groups.length;
+  const votedCount = Object.keys(judgeVotes).length;
+  if (totalGroups > 0 && votedCount >= totalGroups) {
+    celebrationShown = true;
+    launchConfetti();
+  }
+}
+
+function launchConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  document.body.appendChild(container);
+  const colors = ['#6c5ce7','#00b894','#fdcb6e','#e17055','#0984e3','#a29bfe','#ff6b6b','#ffd93d','#6bcb77','#4d96ff'];
+  for (let i = 0; i < 150; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.width = piece.style.height = (Math.random() * 8 + 6) + 'px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    piece.style.animationDelay = (Math.random() * 1.5) + 's';
+    container.appendChild(piece);
+  }
+  const text = document.createElement('div');
+  text.className = 'celebration-text';
+  text.textContent = '\u{1F389} All Votes Complete! \u{1F389}';
+  document.body.appendChild(text);
+  setTimeout(() => { container.remove(); text.remove(); }, 5000);
 }
 
 // ===== RESET ALL VOTES =====
