@@ -467,6 +467,7 @@ async function logout() {
 async function loginAsJudge() {
   const sel = document.getElementById('judge-select');
   if (!sel.value) return;
+  if (!confirm(`Hi ${sel.value}! 👋\n\nConfirm you want to log in as "${sel.value}"?`)) return;
   const lockRes = await fetch('/api/judge/lock', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ judge: sel.value, session_id: SESSION_ID }),
