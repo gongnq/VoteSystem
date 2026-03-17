@@ -642,7 +642,18 @@ function toggleOption(option) {
 }
 
 function updateSubmitButton() {
-  // always enabled — submitting with no selection is allowed
+  const btn = document.getElementById('btn-submit-vote');
+  if (selectedChoices.length === 0) {
+    btn.textContent = 'Skip (Not Applicable)';
+    btn.className = 'btn btn-outline';
+    btn.style.padding = '16px 56px';
+    btn.style.fontSize = '1.1rem';
+  } else {
+    btn.textContent = 'Submit Vote';
+    btn.className = 'btn btn-success';
+    btn.style.padding = '16px 56px';
+    btn.style.fontSize = '1.1rem';
+  }
 }
 
 function closeVoting() {
