@@ -162,6 +162,68 @@ input, select { font-family: inherit; font-size: inherit; }
   100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 @keyframes celebration-fade { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 
+/* ===== COMMENT BOX ===== */
+.comment-wrap { width: 100%; max-width: 600px; margin: 0 auto; flex-shrink: 0; }
+.comment-input { width: 100%; padding: 12px 16px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
+  font-size: 0.95rem; resize: vertical; min-height: 50px; max-height: 120px;
+  font-family: inherit; }
+.comment-input::placeholder { color: var(--text2); }
+.comment-label { font-size: 0.78rem; color: var(--text2); margin-bottom: 4px; }
+
+/* ===== INSTRUCTIONS MODAL ===== */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  animation: modalFadeIn .3s ease; }
+@keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-card { background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 36px 40px; max-width: 520px; width: 90%;
+  text-align: center; animation: modalPop .4s ease; }
+@keyframes modalPop { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-card h2 { font-size: 1.6rem; margin-bottom: 8px; }
+.modal-step { min-height: 200px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px; }
+.modal-step .step-icon { font-size: 3.5rem; position: relative; }
+.modal-step .step-text { font-size: 1.05rem; color: var(--text); line-height: 1.5; }
+.step-finger { position: absolute; font-size: 1.8rem;
+  animation: fingerBounce 1.2s ease-in-out infinite; }
+@keyframes fingerBounce { 0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); } }
+.step-dots { display: flex; gap: 8px; justify-content: center; margin: 16px 0 8px; }
+.step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all .3s; }
+.step-dot.active { background: var(--primary); width: 24px; border-radius: 4px; }
+.modal-btn { padding: 14px 40px; font-size: 1rem; border: none; border-radius: var(--radius-sm);
+  background: var(--primary); color: #fff; font-weight: 700; cursor: pointer;
+  transition: all .15s; }
+.modal-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(108,92,231,.4); }
+.step-scan-demo { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.step-scan-box { width: 64px; height: 64px; border: 3px solid var(--primary);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  position: relative; }
+.step-scan-box svg { width: 36px; height: 36px; stroke: var(--primary); }
+.step-vote-demo { display: flex; gap: 12px; align-items: center; position: relative; }
+.step-vote-btn { padding: 10px 20px; border: 2px solid var(--border); border-radius: 10px;
+  background: var(--surface2); color: var(--text); font-size: 0.85rem; font-weight: 600; }
+.step-skip-btn { padding: 8px 20px; border-radius: 8px;
+  background: var(--success); color: #fff; font-size: 0.8rem; font-weight: 600; }
+.swipe-finger { position: absolute; font-size: 1.6rem; top: -8px; left: 10%;
+  animation: swipeAcross 2.5s ease-in-out infinite; }
+@keyframes swipeAcross { 0% { left: 10%; top: -8px; opacity: 1; }
+  40% { left: 70%; top: -8px; opacity: 1; }
+  60% { left: 70%; top: 40px; opacity: 1; }
+  80% { left: 50%; top: 40px; opacity: 1; }
+  90%,100% { left: 50%; top: 40px; opacity: 0; } }
+
+/* ===== ADMIN COMMENTS ===== */
+.comments-list { text-align: left; }
+.comment-group { background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.comment-group h4 { font-size: 0.95rem; margin-bottom: 10px; color: var(--text);
+  border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.comment-item { padding: 6px 0; font-size: 0.85rem; }
+.comment-item .comment-judge { font-weight: 700; color: var(--primary); }
+.comment-item .comment-text { color: var(--text2); margin-left: 4px; }
+
 /* ===== ADMIN ===== */
 .pin-card { max-width: 360px; margin: 80px auto; background: var(--surface);
   border-radius: var(--radius); padding: 36px; border: 1px solid var(--border); text-align: center; }
@@ -337,7 +399,11 @@ input, select { font-family: inherit; font-size: inherit; }
     <button class="btn-close-vote" onclick="closeVoting()">Close</button>
   </div>
   <div class="vote-options" id="vote-options"></div>
-  <div class="submit-row">
+  <div class="comment-wrap">
+    <div class="comment-label">💬 Comment (optional)</div>
+    <textarea class="comment-input" id="vote-comment" placeholder="Leave a comment for the team..." rows="2"></textarea>
+  </div>
+  <div class="submit-row" style="margin-top:12px;">
     <button class="btn btn-success" id="btn-submit-vote" onclick="submitVote()">Submit Vote</button>
   </div>
 </div>
@@ -487,6 +553,7 @@ async function loginAsJudge() {
   judgeVotes = await res.json();
   renderGroupGrid();
   showView('view-judge');
+  showInstructions(currentJudge);
 }
 
 function sendHeartbeat() {
@@ -620,6 +687,10 @@ function openVoting(groupId) {
     optionsContainer.appendChild(btn);
   });
 
+  // Load existing comment
+  const commentEl = document.getElementById('vote-comment');
+  commentEl.value = existing ? (existing.comment || '') : '';
+
   updateSubmitButton();
   document.getElementById('voting-panel').classList.remove('hidden');
 }
@@ -670,10 +741,10 @@ async function submitVote() {
   }
   const res = await fetch('/api/vote', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ judge: currentJudge, group_id: currentGroupId, vote_choices: selectedChoices }),
+    body: JSON.stringify({ judge: currentJudge, group_id: currentGroupId, vote_choices: selectedChoices, comment: document.getElementById('vote-comment').value.trim() }),
   });
   if (res.ok) {
-    judgeVotes[currentGroupId] = { vote_choices: [...selectedChoices] };
+    judgeVotes[currentGroupId] = { vote_choices: [...selectedChoices], comment: document.getElementById('vote-comment').value.trim() };
     showToast('Vote submitted!');
     closeVoting();
   } else {
@@ -701,7 +772,7 @@ function getAdminTabNames() {
     const dc = g.display_category || g.category;
     if (!cats.includes(dc)) cats.push(dc);
   });
-  return [...cats, 'QR Codes'];
+  return [...cats, 'Comments', 'QR Codes'];
 }
 
 function renderAdminTabs() {
@@ -719,6 +790,15 @@ function renderAdminTabs() {
 async function loadAdminData() {
   const tabNames = getAdminTabNames();
   const currentTab = tabNames[activeAdminTab] || tabNames[0];
+
+  if (currentTab === 'Comments') {
+    document.getElementById('admin-results').innerHTML = '';
+    document.getElementById('admin-qr-codes').classList.add('hidden');
+    document.getElementById('judge-grid-title').classList.add('hidden');
+    document.getElementById('judge-grid').classList.add('hidden');
+    document.getElementById('admin-results').classList.remove('hidden');
+    await renderComments(); return;
+  }
 
   if (currentTab === 'QR Codes') {
     document.getElementById('admin-results').classList.add('hidden');
@@ -849,6 +929,63 @@ function renderQrCodes() {
       if (el) new QRCode(el, { text: g.id, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
     });
   });
+}
+
+// ===== ADMIN COMMENTS =====
+async function renderComments() {
+  const container = document.getElementById('admin-results');
+  const res = await fetch('/api/comments');
+  const comments = await res.json();
+  const groupMap = {};
+  CONFIG.groups.forEach(g => { groupMap[g.id] = g.name; });
+  let html = '<div class="comments-list">';
+  let hasAny = false;
+  CONFIG.groups.forEach(g => {
+    const gc = comments[g.id];
+    if (!gc || gc.length === 0) return;
+    hasAny = true;
+    html += `<div class="comment-group"><h4>${g.name}</h4>`;
+    gc.forEach(c => {
+      html += `<div class="comment-item"><span class="comment-judge">${c.judge}:</span><span class="comment-text">${c.comment}</span></div>`;
+    });
+    html += '</div>';
+  });
+  if (!hasAny) html += '<p style="color:var(--text2);">No comments yet.</p>';
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ===== INSTRUCTIONS MODAL =====
+function showInstructions(judgeName) {
+  const key = `instructions_shown_${judgeName}`;
+  if (localStorage.getItem(key)) return;
+  localStorage.setItem(key, '1');
+  let step = 0;
+  const steps = [
+    { icon: `<div class="step-scan-demo"><div class="step-scan-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg><span class="step-finger" style="bottom:-18px;right:-12px;">👆</span></div></div>`,
+      text: 'Scan the QR code at each booth,<br>or tap the group card to start' },
+    { icon: `<div style="position:relative;"><div class="step-vote-demo"><div class="step-vote-btn">Option A</div><div class="step-vote-btn">Option B</div><div class="step-skip-btn">Skip</div><span class="swipe-finger">👆</span></div></div>`,
+      text: 'Select your vote options,<br>or skip if not applicable' },
+    { icon: '<div style="font-size:3.5rem;">💬</div>',
+      text: 'Optionally leave a comment<br>for the team' },
+  ];
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  function render() {
+    const s = steps[step];
+    const isLast = step === steps.length - 1;
+    overlay.innerHTML = `<div class="modal-card">
+      <h2>Welcome, ${judgeName}! 👋</h2>
+      <div class="modal-step">${s.icon}<div class="step-text">${s.text}</div></div>
+      <div class="step-dots">${steps.map((_,i) => `<div class="step-dot${i===step?' active':''}"></div>`).join('')}</div>
+      <button class="modal-btn" id="modal-next-btn">${isLast ? "Got it, let's go! 🚀" : 'Next →'}</button>
+    </div>`;
+    overlay.querySelector('#modal-next-btn').onclick = () => {
+      if (isLast) { overlay.remove(); } else { step++; render(); }
+    };
+  }
+  render();
+  document.body.appendChild(overlay);
 }
 
 // ===== CONFETTI CELEBRATION =====

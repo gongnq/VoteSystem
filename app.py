@@ -143,12 +143,18 @@ def init_db():
         if "vote_choice" not in cols:
             db.execute("DROP TABLE votes")
 
+    # Add comment column if missing
+    cols = [row[1] for row in db.execute("PRAGMA table_info(votes)").fetchall()]
+    if "comment" not in cols and "votes" in [row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]:
+        db.execute("ALTER TABLE votes ADD COLUMN comment TEXT DEFAULT ''")
+
     db.execute("""
         CREATE TABLE IF NOT EXISTS votes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             judge TEXT NOT NULL,
             group_id TEXT NOT NULL,
             vote_choice TEXT NOT NULL,
+            comment TEXT DEFAULT '',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                
             UNIQUE(judge, group_id)
@@ -356,14 +362,16 @@ def api_vote():
         if prfaq_count >= 4:
             return jsonify({"error": "You can only select PRFAQ for up to 4 groups"}), 400
 
+    comment = data.get("comment", "").strip()
+
     vote_json = json_mod.dumps(vote_choices)
     db = get_db()
     db.execute("""
-        INSERT INTO votes (judge, group_id, vote_choice, updated_at)
-        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO votes (judge, group_id, vote_choice, comment, updated_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(judge, group_id)
-        DO UPDATE SET vote_choice=excluded.vote_choice, updated_at=CURRENT_TIMESTAMP
-    """, (judge, group_id, vote_json))
+        DO UPDATE SET vote_choice=excluded.vote_choice, comment=excluded.comment, updated_at=CURRENT_TIMESTAMP
+    """, (judge, group_id, vote_json, comment))
     db.commit()
     return jsonify({"ok": True})
 
@@ -374,7 +382,7 @@ def api_judge_votes(judge):
         return jsonify({"error": "Invalid judge"}), 400
     db = get_db()
     rows = db.execute(
-        "SELECT group_id, vote_choice FROM votes WHERE judge = ?",
+        "SELECT group_id, vote_choice, comment FROM votes WHERE judge = ?",
         (judge,),
     ).fetchall()
     votes = {}
@@ -384,7 +392,7 @@ def api_judge_votes(judge):
             choices = json_mod.loads(raw)
         except (json_mod.JSONDecodeError, TypeError):
             choices = [raw]
-        votes[r["group_id"]] = {"vote_choices": choices}
+        votes[r["group_id"]] = {"vote_choices": choices, "comment": r["comment"] or ""}
     return jsonify(votes)
 
 
@@ -466,6 +474,22 @@ def api_progress():
         if r["judge"] in progress:
             progress[r["judge"]]["completed"] = r["cnt"]
     return jsonify(progress)
+
+
+@app.route("/api/comments")
+def api_comments():
+    db = get_db()
+    rows = db.execute(
+        "SELECT judge, group_id, comment FROM votes WHERE comment IS NOT NULL AND comment != ''"
+    ).fetchall()
+    # Group by group_id
+    comments = {}
+    for r in rows:
+        gid = r["group_id"]
+        if gid not in comments:
+            comments[gid] = []
+        comments[gid].append({"judge": r["judge"], "comment": r["comment"]})
+    return jsonify(comments)
 
 
 @app.route("/api/admin/verify", methods=["POST"])
