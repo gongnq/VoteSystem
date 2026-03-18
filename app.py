@@ -81,12 +81,12 @@ DISPLAY_CATEGORY = {"NPI": "NPI", "NPI_PRE": "NPI", "NTI": "NTI"}
 VOTE_OPTIONS_BY_CATEGORY = {
     "NPI": [
         {"label": "PRFAQ", "subtitle": "(Product / Feature Maker)"},
-        {"label": "Customer Delight", "subtitle": "(Customer Pain Points / <br>Customer Will Like)"},
+        {"label": "Customer Delight", "subtitle": "(Customer Pain Points / <br>Customer Will Love)"},
     ],
     "NPI_PRE": [
         {"label": "PRFAQ", "subtitle": "(Product / Feature Maker)"},
         {"label": "PRE-ORDER"},
-        {"label": "Customer Delight", "subtitle": "(Customer Pain Points / <br>Customer Will Like)"},
+        {"label": "Customer Delight", "subtitle": "(Customer Pain Points / <br>Customer Will Love)"},
     ],
     "NTI": [
 
