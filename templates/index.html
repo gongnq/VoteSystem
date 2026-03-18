@@ -164,9 +164,9 @@ input, select { font-family: inherit; font-size: inherit; }
 
 /* ===== COMMENT BOX ===== */
 .comment-wrap { width: 100%; max-width: 600px; margin: 0 auto; flex-shrink: 0; }
-.comment-input { width: 100%; padding: 12px 16px; background: var(--surface2);
+.comment-input { width: 100%; padding: 14px 18px; background: var(--surface2);
   border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
-  font-size: 0.95rem; resize: vertical; min-height: 50px; max-height: 120px;
+  font-size: 1rem; resize: vertical; min-height: 70px; max-height: 160px;
   font-family: inherit; }
 .comment-input::placeholder { color: var(--text2); }
 .comment-label { font-size: 0.78rem; color: var(--text2); margin-bottom: 4px; }
@@ -400,7 +400,7 @@ input, select { font-family: inherit; font-size: inherit; }
   </div>
   <div class="vote-options" id="vote-options"></div>
   <div class="comment-wrap">
-    <div class="comment-label">💬 Comment (optional)</div>
+    <div class="comment-label">Comment (optional)</div>
     <textarea class="comment-input" id="vote-comment" placeholder="Leave a comment for the team..." rows="2"></textarea>
   </div>
   <div class="submit-row" style="margin-top:12px;">
@@ -533,7 +533,6 @@ async function logout() {
 async function loginAsJudge() {
   const sel = document.getElementById('judge-select');
   if (!sel.value) return;
-  if (!confirm(`Hi ${sel.value}! 👋\n\nConfirm you want to log in as "${sel.value}"?`)) return;
   const lockRes = await fetch('/api/judge/lock', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ judge: sel.value, session_id: SESSION_ID }),
