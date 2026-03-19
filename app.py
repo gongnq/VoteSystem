@@ -47,6 +47,10 @@ GROUPS = [
              "Smart Necklace"),
     ("G-10", "10. Chroma Mirror: The AI Stylist That Unlocks Your Most Confident Look", "NPI",
              "Chroma Mirror"),
+    ("G-22", "22. Echo Holo Assistant", "NPI",
+             "Echo Holo Assistant"),
+    ("G-23", "23. Beany: Palm-Sized AI Companion", "NPI_PRE",
+             "Beany: Palm-Sized AI Companion"),
     ("G-11", "11. An Inner Spider Speaker Construction for Full Range", "NTI",
              "Inner Spider Design"),
     ("G-12", "12. Edge to Edge Display Cover Lens", "NTI",
@@ -69,10 +73,6 @@ GROUPS = [
              "Green Technology for Sustainablity"),
     ("G-21", "21. Green Design 2: New-to-Industry PCB Technologies of Recyclable Substrate & Additive Manufacturing", "NTI",
              "Recyclable Substrate PCB Technologies"),
-    ("G-22", "22. Echo Holo Assistant", "NPI",
-             "Echo Holo Assistant"),
-    ("G-23", "23. Beany: Palm-Sized AI Companion", "NPI_PRE",
-             "Beany: Palm-Sized AI Companion"),
 ]
 
 # Maps internal category to the display label shown in badges and admin tabs
