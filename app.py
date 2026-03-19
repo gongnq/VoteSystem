@@ -71,8 +71,8 @@ GROUPS = [
              "Recyclable Substrate PCB Technologies"),
     ("G-22", "22. Echo Holo Assistant", "NPI",
              "Echo Holo Assistant"),
-    ("G-23", "23. Beanny: Palm-Sized AI Companion", "NPI_PRE",
-             "Beanny: Palm-Sized AI Companion"),
+    ("G-23", "23. Beany: Palm-Sized AI Companion", "NPI_PRE",
+             "Beany: Palm-Sized AI Companion"),
 ]
 
 # Maps internal category to the display label shown in badges and admin tabs
