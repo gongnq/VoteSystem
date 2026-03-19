@@ -19,7 +19,7 @@ app = Flask(__name__)
 # ---------------------------------------------------------------------------
 # JUDGES
 # ---------------------------------------------------------------------------
-JUDGES = ["Rob", "Adam", "Volker", "Toby", "Alok", "Leticia", "Prasad", "Amit", "Regien", "Richard", "Owen", "Yongzhi"]
+JUDGES = ["Rob", "Adam", "Volker", "Toby", "Alok", "Leticia", "Prasad", "Amit", "Regien", "Richard", "Albert", "Yongzhi"]
 
 # ---------------------------------------------------------------------------
 # GROUPS — (id, display_name, category)
