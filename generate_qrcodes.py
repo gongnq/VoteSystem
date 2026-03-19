@@ -46,6 +46,7 @@ for gid, name, cat, card_name in GROUPS:
 
 # Build PDF - A4: 210 x 297 mm
 pdf = FPDF(orientation='P', unit='mm', format='A4')
+pdf.set_auto_page_break(auto=False)
 
 for gid, name, cat, card_name in GROUPS:
     pdf.add_page()
@@ -60,20 +61,21 @@ for gid, name, cat, card_name in GROUPS:
     pdf.cell(0, 12, dcat, align='C')
     pdf.ln(16)
 
-    # Group name
-    pdf.set_font('Helvetica', 'B', 20)
-    pdf.set_text_color(30, 30, 50)
-    # Use multi_cell for long names, centered
-    x_margin = 25
-    pdf.set_x(x_margin)
-    # Use full voting title (name), strip leading number like "1. "
+    # Group name - use full voting title, strip leading number
     import re
     display_name = re.sub(r'^\d+\.\s*', '', name)
-    pdf.multi_cell(210 - 2 * x_margin, 10, display_name, align='C')
-    pdf.ln(10)
+    # Smaller font for long titles
+    font_size = 18 if len(display_name) > 50 else 20
+    pdf.set_font('Helvetica', 'B', font_size)
+    pdf.set_text_color(30, 30, 50)
+    x_margin = 20
+    pdf.set_x(x_margin)
+    pdf.multi_cell(210 - 2 * x_margin, 9, display_name, align='C')
+    pdf.ln(6)
 
-    # QR Code - centered, large
-    qr_size = 150  # mm
+    # QR Code - centered, large (auto-size to fit remaining space)
+    remaining = 297 - pdf.get_y() - 40  # leave room for footer
+    qr_size = min(150, remaining)
     qr_x = (210 - qr_size) / 2
     qr_path = os.path.join(tmp_dir, f'{gid}.png')
     pdf.image(qr_path, x=qr_x, y=pdf.get_y(), w=qr_size)
