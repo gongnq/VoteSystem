@@ -66,7 +66,10 @@ for gid, name, cat, card_name in GROUPS:
     # Use multi_cell for long names, centered
     x_margin = 25
     pdf.set_x(x_margin)
-    pdf.multi_cell(210 - 2 * x_margin, 10, card_name, align='C')
+    # Use full voting title (name), strip leading number like "1. "
+    import re
+    display_name = re.sub(r'^\d+\.\s*', '', name)
+    pdf.multi_cell(210 - 2 * x_margin, 10, display_name, align='C')
     pdf.ln(10)
 
     # QR Code - centered, large
