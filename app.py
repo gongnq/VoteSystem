@@ -85,7 +85,7 @@ VOTE_OPTIONS_BY_CATEGORY = {
     ],
     "NPI_PRE": [
         {"label": "PRFAQ", "subtitle": "(Product / Feature Maker)"},
-        {"label": "PRE-ORDER", "subtitle": "(Order Now & Pay Later)"},
+        {"label": "PRE-ORDER", "subtitle": "(Order Now & Pay a Penny 😊)"},
         {"label": "Customer Delight", "subtitle": "(Customer Pain Points / <br>Customer Will Love)"},
     ],
     "NTI": [
