@@ -164,12 +164,12 @@ input, select { font-family: inherit; font-size: inherit; }
 
 /* ===== COUNTDOWN TIMER ===== */
 .countdown-timer { position: absolute; bottom: 16px; left: 32px; display: flex;
-  align-items: center; gap: 8px; font-size: 1.1rem; font-weight: 600;
+  align-items: center; gap: 10px; font-size: 1.6rem; font-weight: 700;
   color: var(--text2); pointer-events: none; user-select: none; }
 .countdown-timer.warning { color: var(--warning); }
-.countdown-timer.urgent { color: #e74c3c; animation: timerPulse 1s ease-in-out infinite; }
+.countdown-timer.urgent { color: #e74c3c; animation: timerPulse 0.5s ease-in-out infinite; }
 @keyframes timerPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-.countdown-timer svg { width: 20px; height: 20px; stroke: currentColor; }
+.countdown-timer svg { width: 26px; height: 26px; stroke: currentColor; }
 
 /* ===== COMMENT BOX ===== */
 .comment-wrap { width: 100%; max-width: 600px; margin: 0 auto; flex-shrink: 0; }
@@ -964,7 +964,7 @@ function updateCountdownDisplay(sec, display, timer) {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   display.textContent = `${m}:${s.toString().padStart(2, '0')}`;
-  if (sec <= 30) timer.className = 'countdown-timer urgent';
+  if (sec <= 5) timer.className = 'countdown-timer urgent';
   else if (sec <= 60) timer.className = 'countdown-timer warning';
   else timer.className = 'countdown-timer';
 }
