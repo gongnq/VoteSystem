@@ -28,6 +28,8 @@ GROUPS = [
     ("G-19", "19. Intelligent Quality: AI-Powered Battery Manufacturing at Scale", "NTI", "Intelligent Quality: AI-Powered"),
     ("G-20", "20. Green Design 1", "NTI", "Green Technology for Sustainablity"),
     ("G-21", "21. Green Design 2: New-to-Industry PCB Technologies of Recyclable Substrate & Additive Manufacturing", "NTI", "Recyclable Substrate PCB Technologies"),
+    ("G-22", "22. Echo Holo Assistant", "NPI", "Echo Holo Assistant"),
+    ("G-23", "23. Beanny: Palm-Sized AI Companion", "NPI_PRE", "Beanny: Palm-Sized AI Companion"),
 ]
 
 DISPLAY_CATEGORY = {"NPI": "NPI", "NPI_PRE": "NPI", "NTI": "NTI"}
