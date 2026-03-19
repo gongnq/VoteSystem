@@ -162,6 +162,15 @@ input, select { font-family: inherit; font-size: inherit; }
   100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 @keyframes celebration-fade { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 
+/* ===== COUNTDOWN TIMER ===== */
+.countdown-timer { position: absolute; bottom: 16px; left: 32px; display: flex;
+  align-items: center; gap: 8px; font-size: 1.1rem; font-weight: 600;
+  color: var(--text2); pointer-events: none; user-select: none; }
+.countdown-timer.warning { color: var(--warning); }
+.countdown-timer.urgent { color: #e74c3c; animation: timerPulse 1s ease-in-out infinite; }
+@keyframes timerPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.countdown-timer svg { width: 20px; height: 20px; stroke: currentColor; }
+
 /* ===== COMMENT BOX ===== */
 .comment-wrap { width: 100%; max-width: 600px; margin: 0 auto; flex-shrink: 0; }
 .comment-input { width: 100%; padding: 14px 18px; background: var(--surface2);
@@ -405,6 +414,10 @@ input, select { font-family: inherit; font-size: inherit; }
   </div>
   <div class="submit-row" style="margin-top:12px;">
     <button class="btn btn-success" id="btn-submit-vote" onclick="submitVote()">Submit Vote</button>
+  </div>
+  <div class="countdown-timer" id="countdown-timer">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <span id="countdown-display">3:00</span>
   </div>
 </div>
 
@@ -692,6 +705,7 @@ function openVoting(groupId) {
 
   updateSubmitButton();
   document.getElementById('voting-panel').classList.remove('hidden');
+  startCountdown();
 }
 
 function toggleOption(option) {
@@ -727,6 +741,7 @@ function updateSubmitButton() {
 }
 
 function closeVoting() {
+  clearCountdown();
   currentGroupId = null; selectedChoices = [];
   document.getElementById('voting-panel').classList.add('hidden');
   renderGroupGrid();
@@ -928,6 +943,33 @@ function renderQrCodes() {
       if (el) new QRCode(el, { text: g.id, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
     });
   });
+}
+
+// ===== COUNTDOWN TIMER =====
+let countdownInterval = null;
+function startCountdown() {
+  clearCountdown();
+  let seconds = 180; // 3 minutes
+  const display = document.getElementById('countdown-display');
+  const timer = document.getElementById('countdown-timer');
+  timer.className = 'countdown-timer';
+  updateCountdownDisplay(seconds, display, timer);
+  countdownInterval = setInterval(() => {
+    seconds--;
+    if (seconds <= 0) { clearCountdown(); display.textContent = '0:00'; timer.className = 'countdown-timer urgent'; return; }
+    updateCountdownDisplay(seconds, display, timer);
+  }, 1000);
+}
+function updateCountdownDisplay(sec, display, timer) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  display.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  if (sec <= 30) timer.className = 'countdown-timer urgent';
+  else if (sec <= 60) timer.className = 'countdown-timer warning';
+  else timer.className = 'countdown-timer';
+}
+function clearCountdown() {
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
 }
 
 // ===== ADMIN COMMENTS =====
