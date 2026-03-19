@@ -92,7 +92,7 @@ VOTE_OPTIONS_BY_CATEGORY = {
 
         {"label": "Product Concept", "subtitle": "(Technology Enabler)"},
         {"label": "Accelerator", "subtitle": "(Operational Excellence /<br>AI Implementation /<br>Sustainable Energy)"},
-        {"label": "Think Big", "subtitle": "(Design for Long Term & Scalable)"},
+        {"label": "Think Big", "subtitle": "(Design for Long Term & Scalability)"},
     ],
 }
 
