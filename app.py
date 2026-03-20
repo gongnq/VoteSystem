@@ -505,6 +505,162 @@ def api_admin_verify():
     return jsonify({"ok": False}), 403
 
 
+@app.route("/api/admin/export")
+def api_admin_export():
+    """Export all results to Excel."""
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    db = get_db()
+    rows = db.execute("SELECT judge, group_id, vote_choice, comment FROM votes").fetchall()
+
+    # Build vote data
+    vote_data = {}  # {group_id: {judge: {choices: [], comment: ''}}}
+    for r in rows:
+        gid = r["group_id"]
+        judge = r["judge"]
+        raw = r["vote_choice"]
+        try:
+            choices = json_mod.loads(raw)
+        except (json_mod.JSONDecodeError, TypeError):
+            choices = [raw]
+        if gid not in vote_data:
+            vote_data[gid] = {}
+        vote_data[gid][judge] = {"choices": choices, "comment": r["comment"] or ""}
+
+    wb = Workbook()
+
+    # --- Sheet 1: Summary ---
+    ws = wb.active
+    ws.title = "Summary"
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin'))
+
+    # Collect all vote option labels per display category
+    all_options = {}
+    for gid, name, cat, *_rest in GROUPS:
+        dcat = DISPLAY_CATEGORY[cat]
+        if dcat not in all_options:
+            all_options[dcat] = []
+        for opt in VOTE_OPTIONS_BY_CATEGORY[cat]:
+            if opt["label"] not in all_options[dcat]:
+                all_options[dcat].append(opt["label"])
+
+    non_scoring = ['PRE-ORDER']
+    for dcat in all_options:
+        scoring = [o for o in all_options[dcat] if o not in non_scoring]
+        extra = [o for o in all_options[dcat] if o in non_scoring]
+        headers = ["Rank", "Group", "Category"] + scoring + ["Total"] + extra + ["Judges Voted"]
+        ws.append([f"=== {dcat} ==="])
+        ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=len(headers))
+        ws[ws.max_row][0].font = Font(bold=True, size=13)
+        ws.append(headers)
+        for col_idx, cell in enumerate(ws[ws.max_row], 1):
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.border = thin_border
+            cell.alignment = Alignment(horizontal='center')
+
+        # Gather groups for this category
+        cat_groups = []
+        for gid, name, cat, *_rest in GROUPS:
+            if DISPLAY_CATEGORY[cat] != dcat:
+                continue
+            votes = vote_data.get(gid, {})
+            tallies = {}
+            judge_count = len(votes)
+            for j, vd in votes.items():
+                for c in vd["choices"]:
+                    tallies[c] = tallies.get(c, 0) + 1
+            scored_total = sum(tallies.get(o, 0) for o in scoring)
+            cat_groups.append((gid, name, cat, tallies, scored_total, judge_count))
+
+        cat_groups.sort(key=lambda x: x[4], reverse=True)
+        for rank, (gid, name, cat, tallies, scored_total, judge_count) in enumerate(cat_groups, 1):
+            valid_opts = {o["label"] for o in VOTE_OPTIONS_BY_CATEGORY[cat]}
+            row_data = [rank, name, DISPLAY_CATEGORY[cat]]
+            for o in scoring:
+                row_data.append(tallies.get(o, 0) if o in valid_opts else "—")
+            row_data.append(scored_total)
+            for o in extra:
+                row_data.append(tallies.get(o, 0) if o in valid_opts else "—")
+            row_data.append(judge_count)
+            ws.append(row_data)
+            for cell in ws[ws.max_row]:
+                cell.border = thin_border
+
+        ws.append([])  # blank row
+
+    # Auto-width
+    for col in ws.columns:
+        max_len = 0
+        for cell in col:
+            if cell.value:
+                max_len = max(max_len, len(str(cell.value)))
+        ws.column_dimensions[col[0].column_letter].width = min(max_len + 3, 50)
+
+    # --- Sheet 2: Detailed Votes ---
+    ws2 = wb.create_sheet("Detailed Votes")
+    headers2 = ["Group", "Category", "Judge", "Choices", "Comment"]
+    ws2.append(headers2)
+    for cell in ws2[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+    for gid, name, cat, *_rest in GROUPS:
+        votes = vote_data.get(gid, {})
+        for judge in JUDGES:
+            vd = votes.get(judge)
+            if vd:
+                ws2.append([name, DISPLAY_CATEGORY[cat], judge, ", ".join(vd["choices"]) or "(skipped)", vd["comment"]])
+            else:
+                ws2.append([name, DISPLAY_CATEGORY[cat], judge, "(not voted)", ""])
+            for cell in ws2[ws2.max_row]:
+                cell.border = thin_border
+
+    for col in ws2.columns:
+        max_len = 0
+        for cell in col:
+            if cell.value:
+                max_len = max(max_len, len(str(cell.value)))
+        ws2.column_dimensions[col[0].column_letter].width = min(max_len + 3, 60)
+
+    # --- Sheet 3: Comments ---
+    ws3 = wb.create_sheet("Comments")
+    ws3.append(["Group", "Judge", "Comment"])
+    for cell in ws3[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+    for gid, name, cat, *_rest in GROUPS:
+        votes = vote_data.get(gid, {})
+        for judge, vd in votes.items():
+            if vd["comment"]:
+                ws3.append([name, judge, vd["comment"]])
+                for cell in ws3[ws3.max_row]:
+                    cell.border = thin_border
+
+    for col in ws3.columns:
+        max_len = 0
+        for cell in col:
+            if cell.value:
+                max_len = max(max_len, len(str(cell.value)))
+        ws3.column_dimensions[col[0].column_letter].width = min(max_len + 3, 80)
+
+    # Write to buffer
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return Response(
+        buf.getvalue(),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=DemoCrawl_Results.xlsx"})
+
+
 @app.route("/api/admin/reset", methods=["POST"])
 def api_admin_reset():
     data = request.get_json(force=True)
